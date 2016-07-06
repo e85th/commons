@@ -1,14 +1,10 @@
 # commons
 
-A Clojure library designed to ... well, that part is up to you.
-
-## Usage
-
-FIXME
+A Clojure library with potentially useful reusable code.
 
 ## License
 
-Copyright © 2016 FIXME
+Copyright © 2016 E85th
 
 Distributed under the Eclipse Public License either version 1.0 or (at
 your option) any later version.
