@@ -39,4 +39,7 @@
                  [commons-net "3.5"]]
 
   :source-paths ["src/clj"]
-  :java-source-paths ["src/java"])
+  :java-source-paths ["src/java"]
+
+  :deploy-repositories [["releases" :clojars]
+                        ["snapshots" :clojars]])
