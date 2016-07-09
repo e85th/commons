@@ -42,3 +42,9 @@
     (parse-int s)
     (catch NumberFormatException ex
       (int (parse-double s)))))
+
+
+(defn add-shutdown-hook
+  "Adds a shutdown hook. f is a no arg function."
+  [^Runnable f]
+  (-> (Runtime/getRuntime) (.addShutdownHook (Thread. f))))
