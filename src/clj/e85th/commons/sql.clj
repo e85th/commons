@@ -24,6 +24,12 @@
     (some-> this :datasource hikari/close-datasource)
     (assoc this :datasource nil)))
 
+(defn new-connection-pool
+  "Makes a new connection pool with a :datasource key.
+   See hikari for the keys in the ds-opts map."
+  [ds-opts]
+  (map->HikariCP {:ds-opts ds-opts}))
+
 (def batch-size 25)
 
 (defn as-clj-identifier

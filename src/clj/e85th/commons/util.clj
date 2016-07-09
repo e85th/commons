@@ -2,8 +2,12 @@
   (:require [schema.core :as s]
             [clojure.java.io :as io]
             [taoensso.timbre :as log]
+            [taoensso.timbre.appenders.core :as appenders]
+            [taoensso.timbre.appenders.3rd-party.rotor :as rotor]
             [clojure.string :as string])
-  (:import [java.sql SQLException]))
+  (:import [java.sql SQLException]
+           [org.joda.time DateTimeZone]
+           [java.util TimeZone]))
 
 (defn log-throwable [^Throwable ex]
   (doseq [t (take-while identity (iterate (fn [^Throwable t]
@@ -48,3 +52,29 @@
   "Adds a shutdown hook. f is a no arg function."
   [^Runnable f]
   (-> (Runtime/getRuntime) (.addShutdownHook (Thread. f))))
+
+(defn set-utc-tz
+  "Run the app in UTC timezone. Do this early in app startup
+   to properly deal with timezones and jdbc."
+  []
+  (log/info "Setting UTC as runtime timezone.")
+  (TimeZone/setDefault (TimeZone/getTimeZone "UTC"))
+  (DateTimeZone/setDefault DateTimeZone/UTC))
+
+(defn exit
+  "Prints a message and exits"
+  [status msg]
+  (println msg)
+  (System/exit status))
+
+
+(defn init-logging
+  [log-file]
+  (printf "Log file will be at: %s" log-file)
+  (log/set-config! {:level :info
+                    :min-level :info
+                    :output-fn (partial log/default-output-fn {:stacktrace-fonts {}})
+                    :timestamp-opts {:pattern "yyyy-MM-dd HH:mm:ss.SSS"}})
+  (log/merge-config!
+   {:appenders {:rotor (rotor/rotor-appender {:path log-file :max-size (* 1024 1024 250)}) ; log rotate files 250 MB
+                :println (appenders/println-appender)}}))
