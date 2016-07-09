@@ -1,9 +1,28 @@
 (ns e85th.commons.data.fixed-width
   "Fixed width file parser.
-   Code adapted from http://www.lexicallyscoped.com/2015/01/05/parsing-flat-files-in-clojure.html"
+   Code adapted from http://www.lexicallyscoped.com/2015/01/05/parsing-flat-files-in-clojure.html.
+
+(def parse-rules
+  {:cols [{:name :company
+           :slice [0 62]}
+          {:name :form
+           :slice [62 74]}
+          {:name :cik
+           :slice [74 86]
+           :type :long}
+          {:name :date
+           :slice [86 98]
+           :type :date}
+          {:name :file
+           :slice [98]}]
+   :skip-lines 10
+   :skip-line? (some-fn string/blank? (partial re-seq #\"^-+$\"))})
+
+  "
   (:require [clojure.string :as string]
             [clj-time.coerce :as t-coerce]
-            [taoensso.timbre :as log]))
+            [taoensso.timbre :as log])
+  (:import [java.io BufferedReader]))
 
 (defmulti parse-data first)
 
@@ -31,7 +50,7 @@
   "file is a string
   http://stackoverflow.com/questions/4118123/read-a-very-large-text-file-into-a-list-in-clojure/13312151#13312151"
   [file]
-  (letfn [(helper [rdr]
+  (letfn [(helper [^BufferedReader rdr]
             (lazy-seq
              (if-let [line (.readLine rdr)]
                (cons line (helper rdr))

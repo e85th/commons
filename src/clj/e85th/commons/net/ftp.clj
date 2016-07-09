@@ -13,7 +13,7 @@
 
 (defn connect
   "Connect to the host with user/pass. Returns FTPClient instance."
-  [host user pass]
+  [^String host ^String user ^String pass]
   (let [client (FTPClient.)]
     (doto client
       (.setControlEncoding "UTF-8")
