@@ -26,7 +26,18 @@
 (defn build-properties
   "Returns the build properties created by lein."
   [group-id artifact-id]
-  (slurp (io/resource (format "META-INF/maven/%s/%s/pom.properties" group-id artifact-id))))
+  (-> (format "META-INF/maven/%s/%s/pom.properties" group-id artifact-id)
+      io/resource
+      slurp))
+
+(defn build-properties-with-header
+  [group-id artifact-id]
+  (->> ["\n"
+        "------------------------------------------------------------------------"
+        "- Build Info                                                           -"
+        "------------------------------------------------------------------------"
+        (build-properties group-id artifact-id)]
+       (string/join \newline)))
 
 (defn parse-int
   [s]
