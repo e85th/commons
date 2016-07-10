@@ -39,6 +39,13 @@
         (build-properties group-id artifact-id)]
        (string/join \newline)))
 
+(s/defn log-file-with-suffix
+  "log-file is a string that ends in .log.  Adds the suffix before the
+   .log if there is a suffix."
+  [log-file :- s/Str suffix :- (s/maybe s/Str)]
+  (cond-> log-file
+    (seq suffix) (string/replace #".log$" (str "-" suffix ".log"))))
+
 (defn parse-int
   [s]
   (Integer/parseInt (string/trim s)))
