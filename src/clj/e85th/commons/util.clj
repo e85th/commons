@@ -1,21 +1,28 @@
 (ns e85th.commons.util
   (:require [schema.core :as s]
+            [schema.coerce :as schema-coerce]
             [clojure.java.io :as io]
+            [clj-time.coerce :as time-coerce]
             [taoensso.timbre :as log]
             [taoensso.timbre.appenders.core :as appenders]
             [taoensso.timbre.appenders.3rd-party.rotor :as rotor]
             [clojure.string :as string])
   (:import [java.sql SQLException]
-           [org.joda.time DateTimeZone]
+           [org.joda.time DateTimeZone DateTime]
+           [java.util UUID]
            [java.util TimeZone]))
 
-(defn log-throwable [^Throwable ex]
-  (doseq [t (take-while identity (iterate (fn [^Throwable t]
-                                            (if (instance? SQLException t)
-                                              (.getNextException ^SQLException (cast SQLException t))
-                                              (.getCause t)))
-                                          ex))]
-    (log/error t)))
+(defn log-throwable
+  ([^Throwable ex]
+   (log-throwable ex ""))
+  ([^Throwable ex ^String uuid]
+   (doseq [t (take-while identity (iterate (fn [^Throwable t]
+                                             (if (instance? SQLException t)
+                                               (.getNextException ^SQLException (cast SQLException t))
+                                               (.getCause t)))
+                                           ex))]
+     (log/error t uuid))))
+
 
 (s/defn production?
   [env-name]
@@ -49,6 +56,10 @@
 (defn parse-int
   [s]
   (Integer/parseInt (string/trim s)))
+
+(defn parse-long
+  [s]
+  (Long/parseLong (string/trim s)))
 
 (defn parse-float
   [s]
@@ -96,3 +107,37 @@
   (log/merge-config!
    {:appenders {:rotor (rotor/rotor-appender {:path log-file :max-size (* 1024 1024 250)}) ; log rotate files 250 MB
                 :println (appenders/println-appender)}}))
+
+(def schema-string-coercions
+  (merge schema-coerce/+string-coercions+ {DateTime time-coerce/from-string s/Keyword keyword}))
+
+(defn schema-string-coercion-matcher
+  "Pulled from schema.coerce"
+  [schema]
+  (or (schema-string-coercions schema) (schema-coerce/keyword-enum-matcher schema)))
+
+
+(defn start-thread [daemon? thread-name f]
+  "returns the thread"
+  (let [t (Thread. nil f (str "api-server-" thread-name))]
+    (doto t
+      (.setDaemon daemon?)
+      (.start))
+    t))
+
+(def start-daemon-thread (partial start-thread true))
+(def start-user-thread (partial start-thread false))
+
+(defn periodically
+  "Starts a new user thread and every period ms calls f.
+   f is a no arg function. Returns the thread that is started."
+  [thread-name period f]
+  (start-user-thread thread-name (fn []
+                                   (while true
+                                     (f)
+                                     (Thread/sleep period)))))
+
+(defn uuid
+  "Generates a new uuid."
+  []
+  (str (UUID/randomUUID)))

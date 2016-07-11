@@ -81,13 +81,13 @@
    (insert-multi! db table rows batch-size))
 
   ([db table :- s/Keyword rows batch-size :- s/Int]
-   (assert (seq rows) "rows is empty or nil")
-   (let [table (-> table name as-sql-identifier)
-         col-names (->> rows first keys (map (comp as-sql-identifier name)))
-         col-vals  (map vals rows)]
+   (when (seq rows)
+     (let [table (-> table name as-sql-identifier)
+           col-names (->> rows first keys (map (comp as-sql-identifier name)))
+           col-vals  (map vals rows)]
 
-     (doseq [batches (partition-all batch-size col-vals)]
-       (jdbc/insert-multi! db table col-names batches)))))
+       (doseq [batches (partition-all batch-size col-vals)]
+         (jdbc/insert-multi! db table col-names batches))))))
 
 (s/defn delete!
   [db table :- s/Keyword where-clause]
