@@ -130,7 +130,7 @@
   ([profile :- m/Profile q-name :- s/Str dlq-name :- s/Str]
    (let [q-url (mk profile q-name)
          dlq-url (mk profile dlq-name)]
-     (assign-dead-letter-queue profile q-url dlq-url 10)
+     (assign-dead-letter-queue profile q-url dlq-url 1)
      q-url)))
 
 
