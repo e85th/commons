@@ -119,7 +119,7 @@
 
 (defn start-thread [daemon? thread-name f]
   "returns the thread"
-  (let [t (Thread. nil f (str "api-server-" thread-name))]
+  (let [t (Thread. nil f thread-name)]
     (doto t
       (.setDaemon daemon?)
       (.start))
