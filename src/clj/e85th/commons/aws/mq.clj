@@ -2,72 +2,99 @@
   (:require [e85th.commons.mq :as mq]
             [e85th.commons.util :as u]
             [e85th.commons.aws.sqs :as sqs]
+            [e85th.commons.aws.models :as m]
             [com.stuartsierra.component :as component]
             [schema.core :as s]
             [taoensso.timbre :as log]
-            [cheshire.core :as json]))
+            [cheshire.core :as json])
+  (:import [clojure.lang IFn]))
 
-(defn with-error-handling
+(defn- with-error-handling
   [f error-msg]
   (try
     (f)
     (catch Exception ex
-      (log/error ex error-msg))))
+      (log/error ex error-msg)
+      (Thread/sleep 2)
+      (u/exit 1 (.getMessage ex)))))
+
+(defn dispatchable
+  [[msg-type data]]
+  [(keyword msg-type) data])
 
 (s/defn process-message
   "Process one message, parses it to a clojure data structure and dispatches via on-message-fn."
-  [q-url {:keys [body] :as msg} on-message-fn profile]
+  [profile :- m/Profile q-url :- s/Str on-message-fn :- IFn {:keys [body] :as msg}]
   (try
-    (let [body (json/parse-string body true)]
-      (log/infof "Message received: %s" body)
-      (on-message-fn body)
-      (sqs/delete-message q-url msg profile))
+    (let [dispatchable-msg (-> body (json/parse-string) dispatchable)]
+      (log/debugf "Message received: %s" dispatchable-msg)
+      (on-message-fn dispatchable-msg)
+      (sqs/delete-message profile q-url msg))
     (catch Exception ex
       (log/error ex)
-      (with-error-handling #(sqs/return-to-queue q-url msg profile) "Error returning message to queue."))))
+      (with-error-handling #(sqs/return-to-queue profile q-url msg) "Error returning message to queue."))))
 
 (s/defn run-sqs-loop*
-  [q-url on-message-fn profile]
+  [profile :- m/Profile q-url :- s/Str on-message-fn :- IFn]
   (while true
-    (let [{:keys [messages]} (sqs/dequeue q-url profile)] ;; blocking call
-      (run! #(process-message q-url %1 on-message-fn profile) messages))))
+    (let [{:keys [messages]} (sqs/dequeue profile q-url 10 20)] ;; blocking call
+      (run! (partial process-message profile q-url on-message-fn) messages))))
 
 (s/defn run-sqs-loop
-  [quit q-url on-message-fn profile]
+  [quit profile :- m/Profile q-url :- s/Str on-message-fn]
   (while (not @quit)
-    (with-error-handling #(run-sqs-loop* q-url on-message-fn) "Exception encountered, continuing with sqs-loop..")))
+    (with-error-handling #(run-sqs-loop* profile q-url on-message-fn) "Exception encountered, continuing with sqs-loop..")))
 
-(s/defn mk-dynamic-queue :- s/Str
+(s/defn ^:private mk-dynamic-queue :- s/Str
   "Makes a queue dynamically with a redrive policy for failed messages.
    Answers with the q-url."
-  [q-name profile]
-  (let [dlq-name (str q-name "-failed")]
-    (sqs/mk-queue-with-redrive-policy q-name dlq-name profile)))
+  ([profile :- m/Profile q-name :- s/Str]
+   (mk-dynamic-queue profile q-name "-failed"))
+  ([profile :- m/Profile q-name :- s/Str dlq-suffix :- s/Str]
+   (let [dlq-name (str q-name dlq-suffix)]
+     (sqs/mk-with-redrive-policy profile q-name dlq-name))))
 
-(defrecord SqsMessageProcessor [thread-name q-name topic-names profile on-message-fn dynamic?]
+(defrecord SqsMessageProcessor [thread-name q-name topic-names profile on-message-fn dynamic? resources]
   component/Lifecycle
   (start [this]
+    (log/infof "SqsMessageProcessor starting for queue %s" q-name)
     (let [quit (volatile! false)
-          q-mk-fn (if dynamic? mk-dynamic-queue sqs/name->url)
-          q-url (q-mk-fn q-name profile)]
+          q-url ((if dynamic? mk-dynamic-queue sqs/name->url) profile q-name)]
+
+      (assert q-url "Unable to locate queue. If it is dynamic, specify :dynamic? true.")
 
       (if (seq topic-names)
-        (sqs/subscribe-to-topics q-url topic-names profile)
-        (sqs/name->url q-name profile))
+        (sqs/subscribe-to-topics profile q-url topic-names)
+        (sqs/name->url profile q-name))
 
-      (u/start-user-thread thread-name #(run-sqs-loop quit q-url on-message-fn profile))
+      (u/start-user-thread thread-name #(run-sqs-loop quit profile q-url (partial on-message-fn resources)))
       (assoc this :quit quit)))
 
   (stop [this]
-    (vreset! (:quit this) true)
+    (log/infof "SqsMessageProcessor stopping for queue %s" q-name)
+    (some-> this :quit (vreset! true))
     this))
 
+(s/defschema
+  MessageProcessorParams
+  {:q-name s/Str
+   :on-message-fn IFn
+   (s/optional-key :profile) m/Profile
+   (s/optional-key :topic-names) [s/Str]
+   (s/optional-key :thread-name) s/Str
+   (s/optional-key :dynamic?) s/Bool
+   (s/optional-key :resources) s/Any})
+
 (s/defn new-message-processor
-  "Creates a new SqsMessageProcessor component."
-  [thread-name :- s/Str q-name :- s/Str topic-names :- [s/Str] profile :- s/Str on-message-fn dynamic? :- s/Bool]
-  (map->SqsMessageProcessor {:thread-name thread-name
-                             :q-name q-name
-                             :topic-names topic-names
-                             :on-message-fn on-message-fn
-                             :dynamic? dynamic?
-                             :profile profile}))
+  "Creates a new SqsMessageProcessor component.
+   :dynamic? true will create a queue with a redrive policy.
+   :resources are components needed by the message processing function.
+   :on-message-fn is a function that takes resources and msg (on-message-fn resources msg)
+    The msg passed to on-message-fn will be of [msg-type data].  msg-type is a keyword and
+    can be used to dispatch via a multi method."
+  [{:keys [q-name] :as params} :- MessageProcessorParams]
+  (map->SqsMessageProcessor
+   (merge {:topic-names []
+           :profile m/default-profile
+           :thread-name (str "sqs-mq-processor-" q-name)
+           :dynamic? false} params)))

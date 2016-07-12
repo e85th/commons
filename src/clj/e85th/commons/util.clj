@@ -141,3 +141,10 @@
   "Generates a new uuid."
   []
   (str (UUID/randomUUID)))
+
+
+
+(defn hostname
+  "Answes with the host name for the current machine."
+  []
+  (-> (java.net.InetAddress/getLocalHost) .getHostName))
