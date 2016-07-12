@@ -24,3 +24,10 @@
                                       :subscription-arn subscription-arn
                                       :attribute-name :RawMessageDelivery
                                       :attribute-value true))))
+
+(s/defn publish
+  "Publishes a message to the topic arn."
+  ([topic-arn :- s/Str msg]
+   (publish m/default-profile topic-arn msg))
+  ([profile :- m/Profile topic-arn :- s/Str msg]
+   (sns/publish profile :topic-arn topic-arn :message msg)))

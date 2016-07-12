@@ -141,3 +141,9 @@
         queue-name (format "%s-%s-%s" env context hostname)
         str-len (min 80 (count queue-name))] ;; 80 is max queue name length
     (subs queue-name 0 str-len)))
+
+(s/defn enqueue
+  ([q-url :- s/Str msg]
+   (enqueue m/default-profile q-url msg))
+  ([profile :- m/Profile q-url :- s/Str msg]
+   (sqs/send-message profile q-url msg)))
