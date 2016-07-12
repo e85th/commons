@@ -15,9 +15,7 @@
   (try
     (f)
     (catch Exception ex
-      (log/error ex error-msg)
-      (Thread/sleep 2)
-      (u/exit 1 (.getMessage ex)))))
+      (log/error ex error-msg))))
 
 (defn- dispatchable
   [[msg-type data]]
@@ -88,13 +86,12 @@
 
 (defrecord MessagePublisher [topic-name profile]
   component/Lifecycle
-  mq/IMessagePublisher
-
   (start [this]
     (log/infof "MessagePublisher starting for topic: %s" topic-name)
     (assoc this :t-arn (sns/mk-topic profile topic-name)))
   (stop [this] this)
 
+  mq/IMessagePublisher
   (publish [this msg]
     (s/validate mq/Message msg)
     (sns/publish profile (:t-arn this) (json/generate-string msg))))
