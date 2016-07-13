@@ -76,6 +76,13 @@
     (catch NumberFormatException ex
       (int (parse-double s)))))
 
+(defn coerce-long
+  [s]
+  (try
+    (parse-long s)
+    (catch NumberFormatException ex
+      (long (parse-double s)))))
+
 
 (defn add-shutdown-hook
   "Adds a shutdown hook. f is a no arg function."
