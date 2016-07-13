@@ -39,3 +39,8 @@
   (.setFileType client (if (= binary transfer-mode) FTP/BINARY_FILE_TYPE FTP/ASCII_FILE_TYPE))
   (with-open [outstream (java.io.FileOutputStream. (io/as-file local-name))]
     (.retrieveFile client remote-name outstream)))
+
+(defn cd
+  "Change directory."
+  [^FTPClient client path]
+  (.changeWorkingDirectory client path))
