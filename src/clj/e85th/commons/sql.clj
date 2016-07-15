@@ -72,7 +72,7 @@
 
 (defn- assoc-update-audits
   [user-id row]
-  (assoc row {:updated-by user-id}))
+  (assoc row {:updated-by user-id :updated-at (t/now)}))
 
 (defn- assoc-audits
   [user-id row]
@@ -85,7 +85,7 @@
    created-by and updated-by fields will be assocd into the row."
   ([db table :- s/Keyword row]
    (let [data (jdbc/insert! db table row {:entities as-sql-identifier})
-         data (if (map? data) (first data))]
+         data (if (map? data) data (first data))]
      (clojurize-returned-row data)))
   ([db table :- s/Keyword row user-id :- s/Int]
    (insert! db table (assoc-audits user-id row))))

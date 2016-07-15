@@ -9,8 +9,7 @@
             [clojure.string :as string])
   (:import [java.sql SQLException]
            [org.joda.time DateTimeZone DateTime]
-           [java.util UUID]
-           [java.util TimeZone]))
+           [java.util UUID TimeZone]))
 
 (defn log-throwable
   ([^Throwable ex]
