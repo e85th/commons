@@ -30,7 +30,7 @@
   [ds-opts]
   (map->HikariCP {:ds-opts ds-opts}))
 
-(def batch-size 25)
+(def default-batch-size 25)
 
 (defn as-clj-identifier
   [^String s]
@@ -66,19 +66,39 @@
              {}
              data))
 
-(s/defn insert!
-  "Returns the inserted row as a map"
-  [db table :- s/Keyword row]
-  (let [data (jdbc/insert! db table row {:entities as-sql-identifier})]
-    (if (map? data)
-      (clojurize-returned-row data)
-      (map clojurize-returned-row data))))
+(defn- assoc-insert-audits
+  [user-id row]
+  (assoc row {:created-by user-id}))
 
+(defn- assoc-update-audits
+  [user-id row]
+  (assoc row {:updated-by user-id}))
+
+(defn- assoc-audits
+  [user-id row]
+  (-> row
+      (assoc-insert-audits user-id)
+      (assoc-update-audits user-id)))
+
+(s/defn insert!
+  "Returns the inserted row as a map. When user-id is specified,
+   created-by and updated-by fields will be assocd into the row."
+  ([db table :- s/Keyword row]
+   (let [data (jdbc/insert! db table row {:entities as-sql-identifier})
+         data (if (map? data) (first data))]
+     (clojurize-returned-row data)))
+  ([db table :- s/Keyword row user-id :- s/Int]
+   (insert! db table (assoc-audits user-id row))))
+
+(s/defn insert-with-create-audits!
+  "Adds in keys :created-by to the row and calls insert!"
+  [db table :- s/Keyword row user-id :- s/Int]
+  (insert! db table (assoc-insert-audits user-id row)))
 
 (s/defn insert-multi!
   "Batch inserts"
   ([db table :- s/Keyword rows]
-   (insert-multi! db table rows batch-size))
+   (insert-multi! db table rows default-batch-size))
 
   ([db table :- s/Keyword rows batch-size :- s/Int]
    (when (seq rows)
@@ -89,18 +109,39 @@
        (doseq [batches (partition-all batch-size col-vals)]
          (jdbc/insert-multi! db table col-names batches))))))
 
+(defn- insert-multi-with-audits*
+  [db table rows assoc-audit-fields-fn batch-size]
+  (let [rows (map assoc-audit-fields-fn rows)]
+    (insert-multi! db table rows batch-size)))
+
+(s/defn insert-multi-with-audits!
+  "Batch insert with audits."
+  ([db table :- s/Keyword rows user-id :- s/Int]
+   (insert-multi-with-audits! db table rows user-id default-batch-size))
+  ([db table :- s/Keyword rows user-id :- s/Int batch-size :- s/Int]
+   (insert-multi-with-audits* db table rows (partial assoc-audits user-id) default-batch-size)))
+
+(s/defn insert-multi-with-create-audits!
+  "Batch insert with create audits."
+  ([db table :- s/Keyword rows user-id :- s/Int]
+   (insert-multi-with-create-audits! db table rows user-id default-batch-size))
+  ([db table :- s/Keyword rows user-id :- s/Int batch-size :- s/Int]
+   (insert-multi-with-audits* db table rows (partial assoc-insert-audits user-id) default-batch-size)))
+
 (s/defn delete!
   [db table :- s/Keyword where-clause]
   (jdbc/delete! db table where-clause {:entities as-sql-identifier}))
 
 (s/defn update!
   "Returns count of rows updated."
-  [db table :- s/Keyword row where-clause]
-  (when (seq row)
-    (jdbc/update! db table row where-clause {:entities as-sql-identifier})))
+  ([db table :- s/Keyword row where-clause]
+   (when (seq row)
+     (jdbc/update! db table row where-clause {:entities as-sql-identifier})))
+  ([db table :- s/Keyword row where-clause user-id :- s/Int]
+   (when (seq row)
+     (jdbc/update! db table (assoc-update-audits user-id row) where-clause {:entities as-sql-identifier}))))
 
 (s/defn unique-violation?
-  "Answers if the sql exception is caused by a unique constraint violation.
-   See: https://www.postgresql.org/docs/current/static/errcodes-appendix.html"
+  "Postgres unique violation for the exception? https://www.postgresql.org/docs/current/static/errcodes-appendix.html"
   [ex :- SQLException]
   (= "23505" (.getSQLState ex)))
