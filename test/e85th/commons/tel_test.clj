@@ -23,7 +23,7 @@
     (is (nil? (tel/parse "1")))
     (is (tel/phone-number-instance? (tel/parse valid-number-1)))))
 
-(deftest valid-number-1s
+(deftest valid-numbers
   (testing "nil"
     (is (false? (tel/valid? nil))))
 
