@@ -20,3 +20,13 @@
 (s/defschema MessagePublisherParams
   {:topic-name s/Str
    (s/optional-key :profile) Profile})
+
+
+(def promotional-sms-type "Promotional")
+(def transactional-sms-type "Transactional")
+(def SmsType (s/enum promotional-sms-type transactional-sms-type))
+
+(s/defschema SmsOptions
+  {(s/optional-key :sender-id) s/Str
+   (s/optional-key :max-price) s/Num
+   (s/optional-key :sms-type) SmsType})

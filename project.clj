@@ -6,12 +6,12 @@
   :dependencies [[org.clojure/clojure "1.8.0"]
 
                  [org.clojure/java.jdbc "0.5.8"]
-                 [hikari-cp "1.7.1"] ; db connection pool
+                 [hikari-cp "1.7.2"] ; db connection pool
 
                  [com.stuartsierra/component "0.3.1"]
 
                  ;; -- Logging
-                 [com.taoensso/timbre "4.4.0"]
+                 [com.taoensso/timbre "4.6.0"]
 
                  ;; -- contracts
                  [prismatic/schema "1.1.2"]
@@ -23,22 +23,22 @@
                  [org.clojure/core.match "0.3.0-alpha4"]
 
                  ;; -- JSON
-                 [cheshire "5.6.1"]
+                 [cheshire "5.6.3"]
                  ;; -- DateTime
                  [clj-time "0.12.0"]
 
-                 [com.googlecode.libphonenumber/libphonenumber "7.4.0"]
+                 [com.googlecode.libphonenumber/libphonenumber "7.4.5"]
 
                  ;; -- Email
                  [com.draines/postal "2.0.0"]
 
                  ;; -- AWS
-                 [amazonica "0.3.59" :exclusions [com.amazonaws/aws-java-sdk]]
-                 [com.amazonaws/aws-java-sdk-core "1.11.8"]
-                 [com.amazonaws/aws-java-sdk-s3 "1.11.8"]
-                 [com.amazonaws/aws-java-sdk-sqs "1.11.8"]
-                 [com.amazonaws/aws-java-sdk-sns "1.11.8"]
-                 [com.amazonaws/aws-java-sdk-ses "1.11.8"]
+                 [amazonica "0.3.66" :exclusions [com.amazonaws/aws-java-sdk]]
+                 [com.amazonaws/aws-java-sdk-core "1.11.18"]
+                 [com.amazonaws/aws-java-sdk-s3 "1.11.18"]
+                 [com.amazonaws/aws-java-sdk-sqs "1.11.18"]
+                 [com.amazonaws/aws-java-sdk-sns "1.11.18"]
+                 [com.amazonaws/aws-java-sdk-ses "1.11.18"]
 
                  ;; -- FTP
                  [commons-net "3.5"]]

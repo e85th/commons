@@ -1,12 +1,15 @@
 (ns e85th.commons.email
+  (:refer-clojure :exclude [send])
   (:require [schema.core :as s]
             [com.stuartsierra.component :as component]
             [taoensso.timbre :as log]
             [postal.core :as postal])
   (:import [clojure.lang IFn]))
 
+(def html-content-type "text/html")
+
 (def ^{:doc "Default content type text/html"}
-  default-content-type "text/html")
+  default-content-type html-content-type)
 
 (s/defschema SmtpConfig
   {:host s/Str
@@ -36,13 +39,13 @@
 
 (defn- send-message
   "Sends the message."
-  [mail-config
+  [smtp-config
    subject-modifier-fn
    {:keys [subject body content-type] :or {content-type default-content-type} :as msg}]
   (s/validate Message msg)
   (let [msg (merge {:subject (subject-modifier-fn subject)
                     :body [{:type content-type :content body}]} msg)
-        {:keys [code] :as response} (postal/send-message mail-config msg)]
+        {:keys [code] :as response} (postal/send-message smtp-config msg)]
     (assert (zero? code) (format "Error sending email. %s" response))))
 
 (defprotocol IEmailSender
@@ -58,7 +61,6 @@
 
   IEmailSender
   (send [this msg]
-    (s/validate Message msg)
     (send-message smtp-config subject-modifier-fn msg)))
 
 (s/defn new-smtp-email-sender :- IEmailSender
@@ -67,3 +69,9 @@
    (new-smtp-email-sender smtp-config identity))
   ([smtp-config :- SmtpConfig subject-modifier-fn :- IFn]
    (map->SmtpEmailSender (merge {:subject-modifier-fn identity} smtp-config))))
+
+
+(s/defn valid?
+  "Valid email address?. The regex was copied from the bouncer library."
+  [address :- s/Str]
+  (some? (re-seq #"^[^@]+@[^@\\.]+[\\.].+" address)))

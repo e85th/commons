@@ -24,7 +24,7 @@
    (str->phone-number nbr default-country-code))
   ([nbr :- s/Str iso-country-code :- s/Str]
    (try
-     (.parse phone-nbr-util nbr iso-country-code)
+     (.parse ^PhoneNumberUtil phone-nbr-util nbr iso-country-code)
      (catch Exception ex
        nil))))
 
@@ -35,44 +35,56 @@
   [msg]
   (PhoneNumberException. msg))
 
+
+
+;; PhoneNumber Protocol
 (defprotocol IPhoneNumber
   (valid? [this] "Answer if phone is valid.")
+
   (match?
     [this other]
     [this other iso-country-code]
     "Answers if phone numbers match.")
+
   (parse
     [this]
     [this iso-country-code]
     "Parses to a Phonenumber$PhoneNumber instance or return nil if parse failed")
+
   (normalize [this]
     "Normalize a phone number to E164 format.")
+
   (format
     [this]
     [this phone-nbr-fmt]
     "Format the phone number according to the national convention by default. phone-nbr-fmt is an instance of PhoneNumberUtil$PhoneNumberFormat"))
+
 
 (extend-protocol IPhoneNumber
 
   ;; - PhoneNumber
   Phonenumber$PhoneNumber
   (valid? [this]
-    (.isValidNumber phone-nbr-util this))
+    (.isValidNumber ^PhoneNumberUtil phone-nbr-util this))
+
   (parse
     ([this] this)
     ([this iso-country-code] this))
+
   (match?
    ([this other]
      (match? this other default-country-code))
     ([this other iso-country-code]
      (= PhoneNumberUtil$MatchType/EXACT_MATCH
-        (.isNumberMatch phone-nbr-util this (parse other iso-country-code)))))
+        (.isNumberMatch ^PhoneNumberUtil phone-nbr-util this ^Phonenumber$PhoneNumber (parse other iso-country-code)))))
+
   (format
     ([this]
      (format this national-format))
     ([this phone-nbr-fmt]
      (assert (instance? PhoneNumberUtil$PhoneNumberFormat phone-nbr-fmt))
-     (.format phone-nbr-util this phone-nbr-fmt)))
+     (.format ^PhoneNumberUtil phone-nbr-util this phone-nbr-fmt)))
+
   (normalize [this]
     (format this e164-format))
 
