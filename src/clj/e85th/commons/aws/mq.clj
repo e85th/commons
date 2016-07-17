@@ -25,7 +25,7 @@
   "Process one message, parses it to a clojure data structure and dispatches via on-message-fn."
   [profile :- m/Profile q-url :- s/Str on-message-fn :- IFn {:keys [body] :as msg}]
   (try
-    (let [dispatchable-msg (-> body (json/parse-string) dispatchable)]
+    (let [dispatchable-msg (-> body (json/parse-string true) dispatchable)]
       (log/debugf "Message received: %s" dispatchable-msg)
       (on-message-fn dispatchable-msg)
       (sqs/delete-message profile q-url msg))
