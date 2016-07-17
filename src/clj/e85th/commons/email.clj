@@ -63,12 +63,25 @@
   (send [this msg]
     (send-message smtp-config subject-modifier-fn msg)))
 
-(s/defn new-smtp-email-sender :- IEmailSender
+(s/defn new-smtp-email-sender
   "Creates a new smtp email sender."
   ([smtp-config :- SmtpConfig]
    (new-smtp-email-sender smtp-config identity))
   ([smtp-config :- SmtpConfig subject-modifier-fn :- IFn]
    (map->SmtpEmailSender (merge {:subject-modifier-fn identity} smtp-config))))
+
+(defrecord NilEmailSender []
+  component/Lifecycle
+  (start [this] this)
+  (stop [this] this)
+
+  IEmailSender
+  (send [this msg]))
+
+(defn new-nil-email-sender
+  []
+  (map->NilEmailSender {}))
+
 
 
 (s/defn valid?
