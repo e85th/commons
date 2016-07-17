@@ -44,7 +44,7 @@
   (parse
     [this]
     [this iso-country-code]
-    "Parses to a Phonenumber$PhoneNumber instance")
+    "Parses to a Phonenumber$PhoneNumber instance or return nil if parse failed")
   (normalize [this]
     "Normalize a phone number to E164 format.")
   (format

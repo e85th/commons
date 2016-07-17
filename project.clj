@@ -29,6 +29,9 @@
 
                  [com.googlecode.libphonenumber/libphonenumber "7.4.0"]
 
+                 ;; -- Email
+                 [com.draines/postal "2.0.0"]
+
                  ;; -- AWS
                  [amazonica "0.3.59" :exclusions [com.amazonaws/aws-java-sdk]]
                  [com.amazonaws/aws-java-sdk-core "1.11.8"]
