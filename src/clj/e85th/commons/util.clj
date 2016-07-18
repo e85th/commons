@@ -169,3 +169,11 @@
           (dissoc m k)))
       m)
     (dissoc m k)))
+
+(defn make-all-keys-optional
+  "m is a schema map. Makes all keys optional in the schema map."
+  [m]
+  (reduce (fn [ans [k v]]
+            (assoc ans (if (s/optional-key? k) k (s/optional-key k)) v))
+          {}
+          m))

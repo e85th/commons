@@ -8,7 +8,8 @@
             [com.stuartsierra.component :as component]
             [schema.core :as s])
   (:import [org.joda.time DateTime]
-           [java.sql PreparedStatement SQLException]))
+           [java.sql PreparedStatement SQLException]
+           [e85th.commons.exception SqlNoRowsUpdatedException]))
 
 (defrecord HikariCP [ds-opts]
   component/Lifecycle
@@ -55,6 +56,8 @@
     (.setTimestamp stmt idx (coerce/to-sql-time v))))
 
 (s/defn query
+  "Returns count of rows updated.
+  (sql/query! (:db system) [\"select * from typeform.evideen_signup where id = ?\" 12]"
   [db sql-and-params]
   (jdbc/query db sql-and-params {:identifiers as-clj-identifier}))
 
@@ -129,19 +132,29 @@
    (insert-multi-with-audits* db table rows (partial assoc-insert-audits user-id) default-batch-size)))
 
 (s/defn delete!
+  "Delete. (sql/delete! (:db system) :schema.table-name [\"id = ?\" 42])"
   [db table :- s/Keyword where-clause]
   (jdbc/delete! db table where-clause {:entities as-sql-identifier}))
 
-(s/defn update!
-  "Returns count of rows updated."
-  ([db table :- s/Keyword row where-clause]
-   (when (seq row)
-     (jdbc/update! db table row where-clause {:entities as-sql-identifier})))
-  ([db table :- s/Keyword row where-clause user-id :- s/Int]
-   (when (seq row)
-     (jdbc/update! db table (assoc-update-audits user-id row) where-clause {:entities as-sql-identifier}))))
+(s/defn ^:private update* :- s/Int
+  ([db table :- s/Keyword row :- {s/Keyword s/Any} where-clause]
+   (update* db table row where-clause false))
+  ([db table :- s/Keyword row :- {s/Keyword s/Any} where-clause optimistic? :- s/Bool]
+   (let [n (first (jdbc/update! db table row where-clause {:entities as-sql-identifier}))]
+     (if (and optimistic? (zero? n))
+       (throw (SqlNoRowsUpdatedException.))
+       n))))
 
-(s/defn unique-violation?
+(s/defn update! :- s/Int
+  "Returns count of rows updated.
+  (sql/update! (:db system) :schema.table-name {:first-name \"Mary\"} [\"id = ?\" 42])
+  "
+  ([db table :- s/Keyword row :- {s/Keyword s/Any} where-clause]
+   (update* db table row where-clause))
+  ([db table :- s/Keyword row where-clause user-id :- s/Int]
+   (update* db table (assoc-update-audits user-id row) where-clause)))
+
+(s/defn unique-violation? :- s/Bool
   "Postgres unique violation for the exception? https://www.postgresql.org/docs/current/static/errcodes-appendix.html"
   [ex :- SQLException]
   (= "23505" (.getSQLState ex)))

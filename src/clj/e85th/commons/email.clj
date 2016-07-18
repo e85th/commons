@@ -3,6 +3,7 @@
   (:require [schema.core :as s]
             [com.stuartsierra.component :as component]
             [taoensso.timbre :as log]
+            [e85th.commons.util :as u]
             [postal.core :as postal])
   (:import [clojure.lang IFn]))
 
@@ -36,6 +37,12 @@
   (if (seq prefix)
     (partial str prefix)
     identity))
+
+(s/defn env->subject-prefixer :- IFn
+  "Generates a prefixer that prefixes [TEST] if non prod env."
+  [env-name]
+  (let [prefix (if-not (u/production? env-name) "[TEST] ")]
+    (make-subject-prefixer prefix)))
 
 (defn- send-message
   "Sends the message."

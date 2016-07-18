@@ -33,7 +33,7 @@
     url :- s/Str
     params :- (s/maybe {s/Any s/Any})]
    (let [f (kw->method method-kw)
-         request ({:method method-kw :url url :params params})
+         request {:method method-kw :url url :params params}
          p (promise)]
      (f url (cond-> {:handler #(deliver p [true request %])
                      :error-handler #(deliver p [false request %])
