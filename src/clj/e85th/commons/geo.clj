@@ -1,7 +1,8 @@
 (ns e85th.commons.geo
   (:require [schema.core :as s]
             [e85th.commons.net.rpc :as rpc]
-            [com.stuartsierra.component :as component]))
+            [com.stuartsierra.component :as component]
+            [clojure.string :as string]))
 
 (s/defschema Geocode
   {:lat s/Num
@@ -12,6 +13,10 @@
    :lng s/Num
    :radius s/Num ;; in meters
    :name s/Str})
+
+(s/defschema PlaceSearchResult
+  {:geocode Geocode
+   :place-id s/Str})
 
 
 (defprotocol IGeocoder
@@ -61,3 +66,13 @@
 (s/defn new-google-geocoder
   [api-key :- s/Str]
   (map->GoogleGeocoder {:api-key api-key}))
+
+
+(s/defn compose-address
+  "Takes components of an address and filters out non-blanks and constructs
+   a ', ' separated string."
+  [street city state zip]
+  (->> [street city state zip]
+       (filter (complement string/blank?))
+       (interpose ", " )
+       (apply str)))
