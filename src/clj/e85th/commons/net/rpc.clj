@@ -1,6 +1,7 @@
 (ns e85th.commons.net.rpc
   (:refer-clojure :exclude [await])
   (:require [ajax.core :as http]
+            [clj-http.client :as httpc]
             [clojure.core.match :refer [match]]
             [schema.core :as s]))
 
@@ -9,6 +10,12 @@
    :get http/GET
    :post http/POST
    :put http/PUT})
+
+(def alt-kw->method
+  {:delete httpc/delete
+   :get httpc/get
+   :post httpc/post
+   :put httpc/put})
 
 (defn await
   "Derefs a promise created by api-call!.
@@ -46,7 +53,18 @@
 (s/defn sync-api-call!
   "Synchronus (blocking) api call."
   ([method-kw url]
-   (api-call! method-kw url nil))
+   (sync-api-call! method-kw url nil))
   ([method-kw url params]
    (-> (api-call! method-kw url params)
        (await true))))
+
+(s/defn alt-sync-api-call!
+  ([method-kw url]
+   (alt-sync-api-call! method-kw url nil))
+  ([method-kw url params]
+   (let [f (alt-kw->method method-kw)
+         get? (= :get method-kw)
+         args (cond-> {:as :json}
+                (and get? (seq params)) (assoc :query-params params)
+                (and (not get?) (seq params)) (assoc :body params :content-type :json :accept :json))]
+     (:body (f url args)))))

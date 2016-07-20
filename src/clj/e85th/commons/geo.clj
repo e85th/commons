@@ -6,18 +6,15 @@
 
 (s/defschema Geocode
   {:lat s/Num
-   :lng s/Num})
+   :lng s/Num
+   :place-id s/Str})
 
 (s/defschema PlaceSearch
   {:lat s/Num
    :lng s/Num
-   :radius s/Num ;; in meters
-   :name s/Str})
-
-(s/defschema PlaceSearchResult
-  {:geocode Geocode
-   :place-id s/Str})
-
+   :name s/Str
+   ;; radius in meters
+   (s/optional-key :radius) s/Num})
 
 (defprotocol IGeocoder
   (geocode [this address])
@@ -27,29 +24,28 @@
 (def goog-places-url "https://maps.googleapis.com/maps/api/place/nearbysearch/json")
 
 (s/defn ^:private parse-goog-geocode :- Geocode
-  [geocode-result]
-  (-> geocode-result :results first :geometry :location))
+  [{:keys [status error_message] :as geocode-result}]
+  (if (= "OK" status)
+    (-> geocode-result
+        (get-in [:results 0 :geometry :location])
+        (assoc :place-id (get-in geocode-result [:results 0 :place_id])))
+    (throw (ex-info "Geocoding failed" geocode-result))))
 
 (s/defn ^:private goog-address->geocode :- Geocode
   [api-key :- s/Str address :- s/Str]
   (->> {:address address :region "us" :key api-key}
-      (rpc/sync-api-call! :get goog-geocode-url)
+      (rpc/alt-sync-api-call! :get goog-geocode-url)
       parse-goog-geocode))
 
-(s/defn ^:private parse-place-search
-  "Returns the first place that is in the result."
-  [place-results]
-  {:location (get-in place-results [:results 0 :geometry :location])
-   :place-id (get-in place-results [:results 0 :place_id])})
-
 (s/defn ^:private goog-place-search
+  "Google place search with radius defaulted to 500 meters"
   [api-key :- s/Str {:keys [lat lng] :as args} :- PlaceSearch]
-  (let [params (-> args
+  (let [params (-> (merge {:radius 500} args)
                    (select-keys [:radius :name])
                    (assoc :location (format "%s,%s" lat lng) :key api-key))]
     (->> params
-         (rpc/sync-api-call! :get goog-places-url)
-         parse-place-search)))
+         (rpc/alt-sync-api-call! :get goog-places-url)
+         parse-goog-geocode)))
 
 (defrecord GoogleGeocoder [api-key]
   component/Lifecycle
