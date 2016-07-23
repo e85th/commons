@@ -71,11 +71,11 @@
 
 (defn- assoc-insert-audits
   [user-id row]
-  (assoc row {:created-by user-id}))
+  (assoc row :created-by user-id))
 
 (defn- assoc-update-audits
   [user-id row]
-  (assoc row {:updated-by user-id :updated-at (t/now)}))
+  (assoc row :updated-by user-id :updated-at (t/now)))
 
 (defn- assoc-audits
   [user-id row]
