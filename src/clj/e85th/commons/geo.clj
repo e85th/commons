@@ -43,3 +43,12 @@
        (filter (complement string/blank?))
        (interpose ", " )
        (apply str)))
+
+(s/defn lat-lng->point :- Point
+  "Generates a Point with :x as lng, :y as lat as required by PostGIS."
+  [lat :- s/Num lng :- s/Num]
+  (map->Point {:x lng :y lat}))
+
+(s/defn point->lat-lng :- [(s/one (s/maybe s/Num) "lat") (s/one (s/maybe s/Num) "lng")]
+  [p :- Point]
+  ((juxt y x) p))
