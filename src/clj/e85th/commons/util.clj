@@ -179,19 +179,11 @@
           m))
 
 
-(def validation-exception ::validation-exception)
-(def not-found-exception ::not-found-exception)
 
-(s/defn new-generic-exception
-  "Creates and returns a new validation exception."
-  [cause :- s/Keyword msg-or-msgs :- (s/conditional string? s/Str :else [s/Str])]
-  (ex-info "Validation exception." {:cause cause
-                                    :errors (if (string? msg-or-msgs) [msg-or-msgs] msg-or-msgs)}))
+(defn as-vector
+  [x]
+  (if (vector? x) x [x]))
 
-(def new-validation-exception (partial new-generic-exception validation-exception))
-
-(defn new-not-found-exception
-  ([]
-   (new-not-found-exception "Resource not found."))
-  ([msg]
-   (new-not-found-exception not-found-exception msg)))
+(defn as-coll
+  [x]
+  (if (coll? x) x [x]))

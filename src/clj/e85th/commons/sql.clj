@@ -9,7 +9,7 @@
             [schema.core :as s])
   (:import [org.joda.time DateTime]
            [java.sql PreparedStatement SQLException]
-           [e85th.commons.exception SqlNoRowsUpdatedException]))
+           [e85th.commons.exceptions NoRowsUpdatedException]))
 
 (defrecord HikariCP [ds-opts]
   component/Lifecycle
@@ -142,7 +142,7 @@
   ([db table :- s/Keyword row :- {s/Keyword s/Any} where-clause optimistic? :- s/Bool]
    (let [n (first (jdbc/update! db table row where-clause {:entities as-sql-identifier}))]
      (if (and optimistic? (zero? n))
-       (throw (SqlNoRowsUpdatedException.))
+       (throw (NoRowsUpdatedException.))
        n))))
 
 (s/defn update! :- s/Int

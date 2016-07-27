@@ -1,4 +1,5 @@
-package e85th.commons.exception;
+package e85th.commons.exceptions;
+
 import java.util.List;
 import java.util.ArrayList;
 

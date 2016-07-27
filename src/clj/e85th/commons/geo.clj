@@ -12,6 +12,15 @@
   (x [this] x)
   (y [this] y))
 
+(defprotocol ILatLng
+  (lat [this])
+  (lng [this]))
+
+(defrecord LatLng [lat lng]
+  ILatLng
+  (lat [this] lat)
+  (lng [this] lng))
+
 (s/defschema Geocode
   {:lat s/Num
    :lng s/Num
@@ -44,14 +53,10 @@
        (interpose ", " )
        (apply str)))
 
-(s/defn lat-lng->point :- Point
-  "Generates a Point with :x as lng, :y as lat as required by PostGIS."
+(s/defn new-lat-lng :- LatLng
+  "Creates a new LatLng"
   [lat :- s/Num lng :- s/Num]
-  (map->Point {:x lng :y lat}))
-
-(s/defn point->lat-lng :- [(s/one (s/maybe s/Num) "lat") (s/one (s/maybe s/Num) "lng")]
-  [p :- Point]
-  ((juxt y x) p))
+  (map->LatLng {:lat lat :lng lng}))
 
 (def earth-radius-miles 3959)
 (def earth-radius-km 6372.8)
