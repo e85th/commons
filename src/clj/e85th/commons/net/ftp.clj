@@ -21,9 +21,7 @@
       (.connect host)
       (.login user pass)
       ;; send NOOP every 1 minute to keep the control channel alive (for routers etc)
-      (.setControlKeepAliveTimeout 60)
-      (.setDataTimeout 1000)
-      )
+      (.setControlKeepAliveTimeout 60))
     client))
 
 (defn disconnect
