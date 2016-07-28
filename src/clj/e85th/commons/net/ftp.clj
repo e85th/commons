@@ -13,16 +13,19 @@
 (def binary ::binary)
 
 (defn connect
-  "Connect to the host with user/pass. Returns FTPClient instance."
+  "Connect to the host with user/pass. Returns FTPClient instance.
+  The client is set to local passive mode which allows for using the client
+  from behind a firewall.  The remove verification enabled is disabled
+  otherwise getting a file fails."
   [^String host ^String user ^String pass]
-  (let [client (FTPClient.)]
-    (doto client
-      (.setControlEncoding "UTF-8")
-      (.connect host)
-      (.login user pass)
-      ;; send NOOP every 1 minute to keep the control channel alive (for routers etc)
-      (.setControlKeepAliveTimeout 60))
-    client))
+  (doto (FTPClient.)
+    (.setControlEncoding "UTF-8")
+    (.connect host)
+    (.login user pass)
+    ;; send NOOP every 1 minute to keep the control channel alive (for routers etc)
+    (.setControlKeepAliveTimeout 60)
+    (.enterLocalPassiveMode)
+    (.setRemoteVerificationEnabled false)))
 
 (defn disconnect
   "disconnects the client"
