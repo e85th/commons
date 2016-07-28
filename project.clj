@@ -10,6 +10,9 @@
 
                  [com.stuartsierra/component "0.3.1"]
 
+                 ;; -- file system utils
+                 [me.raynes/fs "1.4.6"]
+
                  ;; -- Logging
                  [com.taoensso/timbre "4.6.0"]
 

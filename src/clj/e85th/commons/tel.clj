@@ -31,12 +31,6 @@
 (def ^{:doc "Tests to see if it is an instance of Phonenumber$PhoneNumber"}
   phone-number-instance? (partial instance? Phonenumber$PhoneNumber))
 
-(defn- phone-ex
-  [msg]
-  (PhoneNumberException. msg))
-
-
-
 ;; PhoneNumber Protocol
 (defprotocol IPhoneNumber
   (valid? [this] "Answer if phone is valid.")

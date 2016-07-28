@@ -4,7 +4,8 @@
   (get client \"edgar/full-index/company.gz\" \"company.gz\" binary)
   (disconnect client) "
   (:refer-clojure :exclude [get])
-  (:require [clojure.java.io :as io])
+  (:require [clojure.java.io :as io]
+            [me.raynes.fs :as fs])
   (:import [org.apache.commons.net.ftp FTP FTPClient]))
 
 
@@ -34,11 +35,15 @@
   (.listNames client dir))
 
 (defn get
-  "remote-file string path, local-file, string path, transfer-mode :ascii :binary"
-  [^FTPClient client remote-name local-name transfer-mode]
-  (.setFileType client (if (= binary transfer-mode) FTP/BINARY_FILE_TYPE FTP/ASCII_FILE_TYPE))
-  (with-open [outstream (java.io.FileOutputStream. (io/as-file local-name))]
-    (.retrieveFile client remote-name outstream)))
+  "remote-file string path, local-file, string path, transfer-mode :ascii :binary.
+  If no transfer mode is specified uses binary."
+  ([client remote-name local-name]
+   (get client remote-name local-name binary))
+  ([^FTPClient client remote-name local-name transfer-mode]
+   (.setFileType client (if (= binary transfer-mode) FTP/BINARY_FILE_TYPE FTP/ASCII_FILE_TYPE))
+   (fs/mkdirs (fs/parent local-name))
+   (with-open [outstream (java.io.FileOutputStream. (io/as-file local-name))]
+     (.retrieveFile client remote-name outstream))))
 
 (defn cd
   "Change directory."
