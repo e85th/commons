@@ -49,3 +49,17 @@
   "Change directory."
   [^FTPClient client path]
   (.changeWorkingDirectory client path))
+
+
+(defn local-passive-mode
+  "Puts the client into local passive mode."
+  [^FTPClient client]
+  (.enterLocalPassiveMode client))
+
+(defn use-epsv-with-ipv4
+  [^FTPClient client ^Boolean enable?]
+  (.setUseEPSVwithIPv4 client enable?))
+
+(defn enable-remote-verification
+  [^FTPClient client ^Boolean enable?]
+  (.setRemoteVerificationEnabled client enable?))
