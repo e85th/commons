@@ -1,5 +1,6 @@
 (ns e85th.commons.fs
-  (:require [schema.core :as s])
+  (:require [schema.core :as s]
+            [me.raynes.fs :as fs])
   (:import [java.io File]
            [java.nio.file FileSystem FileSystems Files Path CopyOption LinkOption StandardCopyOption]))
 
@@ -47,3 +48,9 @@
   "copy-opts are fs/overwrite"
   [src dest & copy-opts]
   (Files/move (path src) (path dest) (into-array CopyOption (map opt->copy-option copy-opts))))
+
+
+(def ^{:doc "One arg takes a file name or File objects."}
+  empty-file? (comp zero? fs/size))
+(def ^{:doc "complement of empty-file?"}
+  non-empty-file? (complement empty-file?))
