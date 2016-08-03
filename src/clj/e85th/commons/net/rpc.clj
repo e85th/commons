@@ -1,6 +1,7 @@
 (ns e85th.commons.net.rpc
   (:refer-clojure :exclude [await])
-  (:require [ajax.core :as http]
+  (:require ;[org.httpkit.client :as http]
+            [ajax.core :as http]
             [clj-http.client :as httpc]
             [clojure.core.match :refer [match]]
             [schema.core :as s]))
@@ -62,9 +63,11 @@
   ([method-kw url]
    (alt-sync-api-call! method-kw url nil))
   ([method-kw url params]
+   (alt-sync-api-call! method-kw url params nil))
+  ([method-kw url params opts]
    (let [f (alt-kw->method method-kw)
          get? (= :get method-kw)
          args (cond-> {:as :json}
                 (and get? (seq params)) (assoc :query-params params)
                 (and (not get?) (seq params)) (assoc :body params :content-type :json :accept :json))]
-     (:body (f url args)))))
+     (:body (f url args opts)))))

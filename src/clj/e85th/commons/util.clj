@@ -82,6 +82,12 @@
     (catch NumberFormatException ex
       (long (parse-double s)))))
 
+(defn coerce-double
+  [s]
+  (if (string? s)
+    (parse-double s)
+    s))
+
 
 (defn add-shutdown-hook
   "Adds a shutdown hook. f is a no arg function."
@@ -177,6 +183,11 @@
             (assoc ans (if (s/optional-key? k) k (s/optional-key k)) v))
           {}
           m))
+
+(defn schema->update-schema
+  "Takes a map schema and makes all keys optional and dissocs the id."
+  [m]
+  (-> m (dissoc :id) make-all-keys-optional))
 
 (defn as-vector
   [x]
