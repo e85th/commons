@@ -158,3 +158,8 @@
   "Postgres unique violation for the exception? https://www.postgresql.org/docs/current/static/errcodes-appendix.html"
   [ex :- SQLException]
   (= "23505" (.getSQLState ex)))
+
+
+(s/defn truncate-table!
+  [db tbl :- s/Keyword]
+  (jdbc/execute! db [(str "truncate table " (as-sql-identifier  (name tbl)))]))

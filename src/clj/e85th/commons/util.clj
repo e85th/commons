@@ -196,3 +196,12 @@
 (defn as-coll
   [x]
   (if (coll? x) x [x]))
+
+
+(defn sleep
+  [ms]
+  (Thread/sleep ms))
+
+(defn rand-sleep
+  [min-ms additional-max-ms]
+  (Thread/sleep (+ min-ms (rand-int additional-max-ms))))
