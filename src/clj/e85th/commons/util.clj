@@ -69,11 +69,16 @@
   (Double/parseDouble (string/trim s)))
 
 (defn coerce-int
-  [s]
-  (try
-    (parse-int s)
-    (catch NumberFormatException ex
-      (int (parse-double s)))))
+  ([s]
+   (try
+     (parse-int s)
+     (catch NumberFormatException ex
+       (int (parse-double s)))))
+  ([default-value s]
+   (try
+     (coerce-int s)
+     (catch NumberFormatException ex
+       default-value))))
 
 (defn coerce-long
   [s]
