@@ -11,10 +11,12 @@
 
 (s/defn new-generic-exception
   "Creates and returns a new validation exception."
-  [kind :- s/Keyword msg-or-msgs :- (s/conditional string? s/Str :else [s/Str])]
-  (let [msgs (u/as-vector msg-or-msgs)
-        msg-str (string/join "; " msgs)]
-    (ex-info msg-str {ex-type kind ex-errors msgs})))
+  ([kind :- s/Keyword msg-or-msgs :- (s/conditional string? s/Str :else [s/Str])]
+   (new-generic-exception kind msg-or-msgs {}))
+  ([kind :- s/Keyword msg-or-msgs :- (s/conditional string? s/Str :else [s/Str]) data-map]
+   (let [msgs (u/as-vector msg-or-msgs)
+         msg-str (string/join "; " msgs)]
+     (ex-info msg-str (merge data-map {ex-type kind ex-errors msgs})))))
 
 (def new-validation-exception (partial new-generic-exception validation))
 

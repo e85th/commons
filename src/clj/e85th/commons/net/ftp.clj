@@ -5,7 +5,8 @@
   (disconnect client) "
   (:refer-clojure :exclude [get])
   (:require [clojure.java.io :as io]
-            [me.raynes.fs :as fs])
+            [me.raynes.fs :as fs]
+            [e85th.commons.ex :as ex])
   (:import [org.apache.commons.net.ftp FTP FTPClient]))
 
 
@@ -39,14 +40,16 @@
 
 (defn get
   "remote-file string path, local-file, string path, transfer-mode :ascii :binary.
-  If no transfer mode is specified uses binary."
+  If no transfer mode is specified uses binary. Throws an exception if file is not retrieved successfully.."
   ([client remote-name local-name]
    (get client remote-name local-name binary))
   ([^FTPClient client remote-name local-name transfer-mode]
    (.setFileType client (if (= binary transfer-mode) FTP/BINARY_FILE_TYPE FTP/ASCII_FILE_TYPE))
    (fs/mkdirs (fs/parent local-name))
    (with-open [outstream (java.io.FileOutputStream. (io/as-file local-name))]
-     (.retrieveFile client remote-name outstream))))
+     (let [success? (.retrieveFile client remote-name outstream)]
+       (when-not success?
+         (throw (ex/new-generic-exception ::ftp-get-failed "FTP get failed." {:remote-name remote-name :local-name local-name})))))))
 
 (defn cd
   "Change directory."
