@@ -210,3 +210,11 @@
 (defn rand-sleep
   [min-ms additional-max-ms]
   (Thread/sleep (+ min-ms (rand-int additional-max-ms))))
+
+
+(defn class-exists?
+  [class-name]
+  (try
+    (Class/forName class-name)
+    (catch Exception ex
+      false)))
