@@ -216,5 +216,6 @@
   [class-name]
   (try
     (Class/forName class-name)
+    true
     (catch Exception ex
       false)))
