@@ -11,6 +11,12 @@
            [org.joda.time DateTimeZone DateTime]
            [java.util UUID TimeZone]))
 
+(def environment-info
+  {:production #{"prod" "prd" "production"}
+   :staging #{"stage" "stg" "staging"}
+   :test #{"test" "tst" "testing"}
+   :development #{"dev" "development"}})
+
 (defn log-throwable
   ([^Throwable ex]
    (log-throwable ex ""))
@@ -28,6 +34,26 @@
   (-> env-name string/lower-case (= "production")))
 
 (def development? (complement production?))
+
+(s/defn normalize-env :- (s/maybe s/Keyword)
+  [env :- s/Str]
+  (reduce (fn [_ [known-env env-aliases]]
+            (when (env-aliases env)
+              (reduced known-env)))
+          nil
+          environment-info))
+
+(s/defn known-env?
+  [env :- s/Keyword]
+  (some? (environment-info env)))
+
+(defn known-envs
+  ([]
+   (known-envs false))
+  ([as-str?]
+   (cond->> (keys environment-info)
+     as-str? (map name))))
+
 
 (defn build-properties
   "Returns the build properties created by lein."
