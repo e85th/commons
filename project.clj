@@ -30,6 +30,7 @@
                  [cheshire "5.6.3"]
                  ;; -- DateTime
                  [clj-time "0.12.0"]
+                 [org.clojure/data.csv "0.1.3"]
 
                  [com.googlecode.libphonenumber/libphonenumber "7.4.5"]
 
