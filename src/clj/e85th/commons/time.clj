@@ -32,6 +32,18 @@
   [dt]
   (fmt/unparse (fmt/formatter :date-time) dt))
 
+(defn millis->duration-components
+  [millis]
+  (let [divs (reverse (reductions * 1000 [60 60 24]))
+        ;; re
+        reducer (fn [ans n]
+                  (let [[remainder comps] ((juxt first rest) ans)]
+                    (when (zero? remainder)
+                      (reduced ans))
+                    ;; add to comps quotient and the new remainder
+                    (conj comps (int (/ remainder n)) (rem remainder n))))]
+
+    (reverse (reduce reducer (list millis) divs))))
 
 (defn interval->duration-components
   "Given an interval returns a 5 tuple of integers representing
@@ -39,17 +51,7 @@
   ([t1 t2]
    (interval->duration-components (t/interval t1 t2)))
   ([i]
-   ;; divs is millis, millis in 1 minute, millis in 1 hour, millis in 1 day,
-   (let [divs (reverse (reductions * 1000 [60 60 24]))
-         ;; re
-         reducer (fn [ans n]
-                   (let [[remainder comps] ((juxt first rest) ans)]
-                     (when (zero? remainder)
-                       (reduced ans))
-                     ;; add to comps quotient and the new remainder
-                     (conj comps (int (/ remainder n)) (rem remainder n))))]
-
-     (reverse (reduce reducer (list (t/in-millis i)) divs)))))
+   (millis->duration-components (t/in-millis i))))
 
 (defn interval->humanized-string
   "Given an interval returns a 5 tuple of integers representing
@@ -57,12 +59,11 @@
   ([t1 t2]
    (interval->humanized-string (t/interval t1 t2)))
   ([i]
-   (let [units ["day" "hr" "min" "sec" "millis"]
-         ;; butlast gets rid of millis
-         t-comps (butlast (drop-while zero? (interval->duration-components i)))
-         units (butlast (drop (- (count units) (count t-comps)) units))
-         f (fn [qty unit]
-             (str qty " " unit (if (= 1 qty) "" "s")))
+   (let [units ["days" "hrs" "min" "s" "ms"]
+         t-comps (drop-while zero? (interval->duration-components i))
+         units (drop (- (count units) (count t-comps)) units)
          reducer (fn [ans [qty unit]]
-                   (conj ans (f qty unit)))]
-     (string/join ", " (reduce reducer [] (map vector t-comps units))))))
+                   (conj ans (str qty " " unit)))]
+     (if (seq t-comps)
+       (string/join ", " (reduce reducer [] (map vector t-comps units)))
+       "0 ms"))))
