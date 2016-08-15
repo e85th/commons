@@ -1,6 +1,7 @@
 (ns e85th.commons.fs
   (:require [schema.core :as s]
-            [me.raynes.fs :as fs])
+            [me.raynes.fs :as fs]
+            [me.raynes.fs.compression :as compression])
   (:import [java.io File]
            [java.nio.file FileSystem FileSystems Files Path CopyOption LinkOption StandardCopyOption]))
 
@@ -54,3 +55,15 @@
   empty-file? (comp zero? fs/size))
 (def ^{:doc "complement of empty-file?"}
   non-empty-file? (complement empty-file?))
+
+
+(s/defn bunzip2-and-untar
+  ([src :- s/Str dest :- s/Str]
+   (bunzip2-and-untar src dest true))
+  ([src :- s/Str dest :- s/Str delete-src?]
+   (let [tmp-file (fs/temp-name src)]
+     (compression/bunzip2 src tmp-file)
+     (compression/untar tmp-file dest)
+     (fs/delete tmp-file)
+     (when delete-src?
+       (fs/delete src)))))

@@ -31,7 +31,7 @@
 
 (s/defn production?
   [env-name]
-  (-> env-name string/lower-case (= "production")))
+  (-> env-name string/lower-case keyword (= :production)))
 
 (def development? (complement production?))
 
@@ -245,3 +245,9 @@
     true
     (catch Exception ex
       false)))
+
+
+(defn current-process-id
+  "Returns a string or throws an exception Not safe to use according to javadoc"
+  []
+  (-> (java.lang.management.ManagementFactory/getRuntimeMXBean) .getName (string/split  #"@") first))
