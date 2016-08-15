@@ -1,8 +1,9 @@
 (ns e85th.commons.google.geo
   (:require [schema.core :as s]
-            [e85th.commons.net.rpc :as rpc]
+            [org.httpkit.client :as http]
             [e85th.commons.geo :as geo]
             [com.stuartsierra.component :as component]
+            [cheshire.core :as json]
             [clojure.string :as string])
   (:import [e85th.commons.exceptions GeocodingException]))
 
@@ -21,9 +22,11 @@
 
 (s/defn ^:private address->geocode :- geo/Geocode
   [api-key :- s/Str address :- s/Str]
-  (->> {:address address :region "us" :key api-key}
-      (rpc/alt-sync-api-call! :get geocode-url)
-      parse-geocode))
+  (let [opts {:query-params {:address address :region "us" :key api-key}}
+        {:keys [status body] :as resp} @(http/get geocode-url opts)]
+    (when-not (= 200 status)
+      (throw (ex-info "Geocoding error. Server did not return 200." resp)))
+    (parse-geocode (json/parse-string body true))))
 
 (s/defn ^:private parse-place :- geo/Place
   [{:keys [status] :as geocode-result}]
@@ -38,10 +41,11 @@
   [api-key :- s/Str {:keys [lat lng] :as args} :- geo/PlaceSearch]
   (let [params (-> (merge {:radius 500} args)
                    (select-keys [:radius :name])
-                   (assoc :location (format "%s,%s" lat lng) :key api-key))]
-    (->> params
-         (rpc/alt-sync-api-call! :get places-url)
-         parse-place)))
+                   (assoc :location (format "%s,%s" lat lng) :key api-key))
+        {:keys [status body] :as resp} @(http/get places-url {:query-params params})]
+    (when-not (= 200 status)
+      (throw (ex-info "Search for place error. Server did not return 200." resp)))
+    (parse-place (json/parse-string body true))))
 
 (defrecord GoogleGeocoder [api-key]
   component/Lifecycle

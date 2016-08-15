@@ -20,8 +20,7 @@
                  [prismatic/schema "1.1.2"]
 
                  ;; -- async http requests
-                 [cljs-ajax "0.5.8"]
-                 [clj-http "3.1.0"]
+                 [http-kit "2.2.0"]
 
                  ;; -- pattern matching
                  [org.clojure/core.match "0.3.0-alpha4"]
