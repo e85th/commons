@@ -163,3 +163,12 @@
 (s/defn truncate-table!
   [db tbl :- s/Keyword]
   (jdbc/execute! db [(str "truncate table " (as-sql-identifier  (name tbl)))]))
+
+
+(s/defn execute-wo-txn!
+  "Executes statement outside of any implicit transactions.
+   Useful in executing vacuum for example."
+  [db sql]
+  (with-open [cn (jdbc/get-connection db)]
+    (with-open [stmt (.createStatement cn)]
+      (.execute stmt sql))))
