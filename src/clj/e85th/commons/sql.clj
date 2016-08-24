@@ -79,7 +79,7 @@
 
 (defn- assoc-audits
   [user-id row]
-  (-> row
+  (->> row
       (assoc-insert-audits user-id)
       (assoc-update-audits user-id)))
 
