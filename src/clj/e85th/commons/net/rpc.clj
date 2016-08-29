@@ -1,59 +1,39 @@
 (ns e85th.commons.net.rpc
-  (:refer-clojure :exclude [await])
+  (:refer-clojure :exclude [await get])
   (:require [org.httpkit.client :as http]
             [cheshire.core :as json]
             [clojure.core.match :refer [match]]
             [schema.core :as s]))
 
-;; (def kw->method
-;;   {:delete http/DELETE
-;;    :get http/GET
-;;    :post http/POST
-;;    :put http/PUT})
+(defn check-successful-response
+  "Checks that the input response map has a successful status code (200 series) and returns the
+   input response.  If unsuccessful (non 200 series response code), invokes non-success-fn with the
+   response map.  The 1 arity function throws an exception."
+  ([resp]
+   (check-successful-response resp #(throw (ex-info "Unsuccesful response." %))))
+  ([{:keys [status body] :as resp} non-success-fn]
+   (if (#{200 201 202 203 204} status)
+     resp
+     (non-success-fn resp))))
 
-;; (def alt-kw->method
-;;   {:delete httpc/delete
-;;    :get httpc/get
-;;    :post httpc/post
-;;    :put httpc/put})
+(defn parse-response-body
+  [{:keys [body]}]
+  (json/parse-string body true))
 
-;; (defn await
-;;   "Derefs a promise created by api-call!.
-;;    The promise should have [boolean request-details-map response]. This
-;;    function will block until the promise is delivered."
-;;   ([p]
-;;    (await p true))
-;;   ([p throw?]
-;;    (let [[success? request response] @p]
-;;      (match [throw? success?]
-;;        [true true] response
-;;        [true false] (throw (ex-info "API call failed." {:request request :response response}))
-;;        [false true] [success? response]
-;;        [false false] [success? (:response response)]))))
+(def ^{:doc "Checks for a successful response and parses the response body to a clojure data structure"}
+  parse-successful-response (comp parse-response-body check-successful-response))
 
-;; (s/defn api-call!
-;;   "Calls the api endpoint indicated. Returns a promise.
-;;   (rpc/api-call! :get endpoint)"
-;;   ([method-kw :- s/Keyword url :- s/Str]
-;;    (api-call! method-kw url nil))
-;;   ([method-kw :- s/Keyword
-;;     url :- s/Str
-;;     params :- (s/maybe {s/Any s/Any})]
-;;    (let [f (kw->method method-kw)
-;;          request {:method method-kw :url url :params params}
-;;          p (promise)]
-;;      (f url (cond-> {:handler #(deliver p [true request %])
-;;                      :error-handler #(deliver p [false request %])
-;;                      :format :json
-;;                      :response-format :json
-;;                      :keywords? true}
-;;               params (assoc :params params)))
-;;      p)))
+(s/defn call!
+  "Returns a promise. Derefing the promise will yield the http response. http-opts
+   is a map of options used by http-kit."
+  [method :- s/Keyword url :- s/Str http-opts]
+  (let [http-fn (method {:get http/get :post http/post :put http/put :delete http/delete})]
+    (assert http-fn (format "Unknown method: %s" method))
+    (http-fn url http-opts)))
 
-;; (s/defn sync-api-call!
-;;   "Synchronus (blocking) api call."
-;;   ([method-kw url]
-;;    (sync-api-call! method-kw url nil))
-;;   ([method-kw url params]
-;;    (-> (api-call! method-kw url params)
-;;        (await true))))
+(s/defn sync-call!
+  "Makes a blocking http call.  Returns the parsed response body as a clojure
+   data structure. http-opts is a map of options used by http-kit."
+  [method :- s/Keyword url :- s/Str http-opts]
+  (-> @(call! method url http-opts)
+      parse-successful-response))
