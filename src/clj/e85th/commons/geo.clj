@@ -49,7 +49,7 @@
    a ', ' separated string."
   [street city state zip]
   (->> [street city state zip]
-       (filter (complement string/blank?))
+       (remove string/blank?)
        (interpose ", " )
        (apply str)))
 
