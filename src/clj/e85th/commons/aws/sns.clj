@@ -43,8 +43,7 @@
    ;; SNS doesn't seem to deliver to numbers that are not in E164 format
    ;; During testing 2121234567 did not work but 12121234567 would, so it's
    ;; better just to have the nbr normalized
-   (assert (= (tel/normalize to-nbr) to-nbr))
-   (sns/publish profile :phone-number to-nbr :message msg)))
+   (sns/publish profile :phone-number (tel/normalize to-nbr) :message msg)))
 
 (defrecord SnsSmsSender [profile]
   component/Lifecycle

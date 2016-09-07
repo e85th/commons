@@ -1,5 +1,6 @@
 (ns e85th.commons.geo
   (:require [schema.core :as s]
+            [com.stuartsierra.component :as component]
             [clojure.string :as string])
   (:import [e85th.commons.exceptions GeocodingException]))
 
@@ -43,6 +44,27 @@
   "Geocoding"
   (geocode [this address] "Geocode an address otherwise throws GeocodingException.")
   (place-search [this search-params] "Geocode an address otherwise throws GeocodingException."))
+
+(defrecord NilGeocoder [geocode place]
+  component/Lifecycle
+  (start [this] this)
+  (stop [this] this)
+
+  IGeocoder
+  (geocode [this address]
+    geocode)
+
+  (place-search [this search-params]
+    place))
+
+(s/defn new-nil-geocoder
+  "Creates a new geocoder that returns the same values. Does not make network calls."
+  ([]
+   (let [geocode {:lat 40.7128 :lng 74.0059 :place-id "12345" :location-type "Approximate"}
+         place (select-keys geocode [:lat :lng :place-id])]
+     (new-nil-geocoder geocode place)))
+  ([geocode place]
+   (map->NilGeocoder {:geocode geocode :place place})))
 
 (s/defn compose-address
   "Takes components of an address and filters out non-blanks and constructs
