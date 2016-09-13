@@ -2,16 +2,15 @@
   (:require [schema.core :as s]
             [e85th.commons.util :as u]
             [clojure.string :as string])
-  (:import [e85th.commons.exceptions ValidationExceptionInfo]))
+  (:import [e85th.commons.exceptions ValidationExceptionInfo AuthExceptionInfo]))
 
 (def ex-type ::ex-type)
 (def ex-msgs ::ex-msgs)
-(def validation ::validation)
 (def not-found ::not-found)
 
 
 (s/defn new-generic-exception
-  "Creates and returns a new validation exception."
+  "Creates and returns a new generic exception."
   ([kind :- s/Keyword msg-or-msgs :- (s/conditional string? s/Str :else [s/Str])]
    (new-generic-exception kind msg-or-msgs {}))
   ([kind :- s/Keyword msg-or-msgs :- (s/conditional string? s/Str :else [s/Str]) data-map]
@@ -20,6 +19,9 @@
      (ex-info msg-str (merge data-map {ex-type kind ex-msgs msgs})))))
 
 (s/defn new-validation-exception
+  "No single arity which just takes msg-or-msgs because there should be specificity
+   which can be used for UIs to display more user friendly message potentially. kind becomes the
+   error code in keyword form."
   ([kind msg-or-msgs]
    (new-validation-exception kind msg-or-msgs {}))
   ([kind msg-or-msgs data-map]
@@ -35,6 +37,26 @@
 (defn validation-exception?
   [x]
   (instance? ValidationExceptionInfo x))
+
+(s/defn new-auth-exception
+  "No single arity which just takes msg-or-msgs because there should be specificity
+   which can be used for UIs to display more user friendly message potentially. kind becomes the
+   error code in keyword form."
+  ([kind msg-or-msgs]
+   (new-auth-exception kind msg-or-msgs {}))
+  ([kind msg-or-msgs data-map]
+   (new-auth-exception kind msg-or-msgs data-map nil))
+  ([kind :- s/Keyword
+    msg-or-msgs :- (s/conditional string? s/Str :else [s/Str])
+    data-map
+    cause]
+   (let [msgs (u/as-vector msg-or-msgs)
+         msg-str (string/join "; " msgs)]
+     (AuthExceptionInfo. msg-str (merge data-map {ex-type kind ex-msgs msgs}) cause))))
+
+(defn auth-exception?
+  [x]
+  (instance? AuthExceptionInfo x))
 
 (defn new-not-found-exception
   ([]

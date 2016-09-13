@@ -36,6 +36,11 @@
                  ;; -- Email
                  [com.draines/postal "2.0.0"]
 
+                 ;; -- encryption/tokens
+                 [buddy "1.0.0"]
+
+                 [slingshot "0.12.2"]
+
                  ;; -- AWS
                  [amazonica "0.3.66" :exclusions [com.amazonaws/aws-java-sdk]]
                  [com.amazonaws/aws-java-sdk-core "1.11.18"]

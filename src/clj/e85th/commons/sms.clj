@@ -5,7 +5,7 @@
 
 
 (s/defschema Message
-  {:from-nbr s/Str
+  {(s/optional-key :from-nbr) s/Str
    :to-nbr s/Str
    :body s/Str})
 
