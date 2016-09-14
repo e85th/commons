@@ -45,7 +45,7 @@
              :opts opts
              :backend (token-backend/jwe-backend backend-opts))))
 
-  (stop [this])
+  (stop [this] this)
 
   ITokenFactory
   (data->token [this data]
