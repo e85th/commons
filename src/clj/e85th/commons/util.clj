@@ -188,10 +188,14 @@
 
 
 (defn hostname
-  "Answes with the host name for the current machine."
+  "Answers with the host name for the current machine."
   []
   (-> (java.net.InetAddress/getLocalHost) .getHostName))
 
+(defn url->host
+  "Takes a url string and answers with the host."
+  [url]
+  (-> url java.net.URL. .getHost))
 
 (defn dissoc-in
   "Dissociates an entry from a nested associative structure returning a new
