@@ -78,6 +78,15 @@
   (cond-> log-file
     (seq suffix) (string/replace #".log$" (str "-" suffix ".log"))))
 
+(defn parse-bool
+  ([x]
+   (let [x (if (string? x)
+             (string/trim (string/lower-case x))
+             x)]
+     (parse-bool x #{"true" "yes" "on" "1" 1 true})))
+  ([x true-set]
+   (some? (true-set x))))
+
 (defn parse-int
   [s]
   (Integer/parseInt (string/trim s)))
@@ -267,3 +276,11 @@
              (assoc m k (val-agg-fn (map val-fn v))))
            {}
            (group-by key-fn xs))))
+
+(defn install-aviso-schema-prefer-methods!
+  "Installs Aviso Exception dispatch prefer-methods. Without this, actual exceptions are lost."
+  []
+  (doseq [x [clojure.lang.IRecord clojure.lang.IPersistentMap java.util.Map]]
+    (prefer-method io.aviso.exception/exception-dispatch schema.core.Schema x))
+  (doseq [x [clojure.lang.IRecord clojure.lang.IPersistentMap java.util.Map]]
+    (prefer-method io.aviso.exception/exception-dispatch schema.core.AnythingSchema x)))

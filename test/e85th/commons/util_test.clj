@@ -38,3 +38,16 @@
     (testing "non-degenerate case"
       (is (= {"role" #{"r1" "r2"} "permission" #{"p1" "p2"}}
              (u/group-by+ :kind :name set input))))))
+
+(deftest parse-bool-test
+  (is (true? (u/parse-bool "true")))
+  (is (true? (u/parse-bool "True")))
+  (is (true? (u/parse-bool "TrUe")))
+  (is (true? (u/parse-bool "yes")))
+  (is (true? (u/parse-bool "on")))
+  (is (true? (u/parse-bool 1)))
+  (is (true? (u/parse-bool "1")))
+
+  (is (false? (u/parse-bool "")))
+  (is (false? (u/parse-bool nil)))
+  (is (false? (u/parse-bool "false"))))
