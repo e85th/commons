@@ -61,9 +61,7 @@
   "Returns a promise. Derefing the promise will yield the http response. http-opts
    is a map of options used by http-kit."
   [method :- s/Keyword url :- s/Str http-opts]
-  (let [http-fn (method {:get http/get :post http/post :put http/put :delete http/delete})]
-    (assert http-fn (format "Unknown method: %s" method))
-    (http-fn url http-opts)))
+  (http/request (assoc http-opts :method method :url url)))
 
 (s/defn sync-call!
   "Makes a blocking http call.  Returns the parsed response body as a clojure
