@@ -55,6 +55,9 @@
   :source-paths ["src/clj"]
   :java-source-paths ["src/java"]
 
+  ;; only to quell lein-cljsbuild when using checkouts
+  :cljsbuild {:builds []}
+
   :plugins [[com.jakemccrary/lein-test-refresh "0.10.0"]
             [codox "0.8.13"]
             [lein-exec "0.3.6"]
