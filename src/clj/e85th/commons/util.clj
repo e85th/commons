@@ -71,6 +71,16 @@
         (build-properties group-id artifact-id)]
        (string/join \newline)))
 
+(defn build-version
+  "Answers with the current version from pom.properties"
+  [group-id artifact-id]
+  (let [line (-> (build-properties group-id artifact-id)
+                 (string/split #"\n")
+                 (nth 2))]
+    (assert (string/starts-with? line "version=")
+            (format "Expected version line to start with version= but is %s" line))
+    (second (string/split line #"="))))
+
 (s/defn log-file-with-suffix
   "log-file is a string that ends in .log.  Adds the suffix before the
    .log if there is a suffix."
