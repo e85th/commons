@@ -45,7 +45,7 @@
      (non-success-fn resp))))
 
 (defn parse-response-body
-  [{:keys [body headers]}]
+  [{:keys [body headers] :as resp}]
   (let [{:keys [content-type]} headers
         ct-name (content-type->name content-type)]
     (case ct-name
@@ -60,12 +60,36 @@
 (s/defn call!
   "Returns a promise. Derefing the promise will yield the http response. http-opts
    is a map of options used by http-kit."
-  [method :- s/Keyword url :- s/Str http-opts]
-  (http/request (assoc http-opts :method method :url url)))
+  ([method :- s/Keyword url :- s/Str http-opts]
+   (call! (assoc http-opts :method method :url url)))
+  ([req]
+   (http/request req)))
 
 (s/defn sync-call!
   "Makes a blocking http call.  Returns the parsed response body as a clojure
    data structure. http-opts is a map of options used by http-kit."
-  [method :- s/Keyword url :- s/Str http-opts]
-  (-> @(call! method url http-opts)
-      parse-successful-response))
+  ([method :- s/Keyword url :- s/Str http-opts]
+   (-> @(call! method url http-opts)
+       parse-successful-response))
+  ([req]
+   (-> req call! deref parse-successful-response)))
+
+
+(s/defn new-request
+  [method url]
+  {:method method
+   :url url})
+
+(s/defn json-content
+  "Adds in content-type and json encodes the body."
+  ([req]
+   (json-content req nil))
+  ([req body]
+   (cond-> req
+     true (update-in [:headers] merge {"Content-Type" "application/json" "Accept" "application/json"})
+     body (assoc-in [:body] (json/encode body)))))
+
+(s/defn bearer-auth
+  "Add a bearer authorization in to the request headers"
+  [req token]
+  (assoc-in req [:headers "Authorization"] (str "Bearer " token)))
