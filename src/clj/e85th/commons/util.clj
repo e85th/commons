@@ -294,3 +294,12 @@
     (prefer-method io.aviso.exception/exception-dispatch schema.core.Schema x))
   (doseq [x [clojure.lang.IRecord clojure.lang.IPersistentMap java.util.Map]]
     (prefer-method io.aviso.exception/exception-dispatch schema.core.AnythingSchema x)))
+
+(defn deep-merge
+  "Deep merge a data structure. Taken from http://stackoverflow.com/questions/17327733/merge-two-complex-data-structures"
+  [a b]
+  (merge-with (fn [x y]
+                (cond (map? y) (deep-merge x y)
+                      (vector? y) (concat x y)
+                      :else y))
+              a b))
