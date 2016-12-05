@@ -8,6 +8,7 @@
             [taoensso.timbre.appenders.3rd-party.rotor :as rotor]
             [clojure.string :as string])
   (:import [java.sql SQLException]
+           [org.apache.commons.codec.binary Base64]
            [org.joda.time DateTimeZone DateTime]
            [java.util UUID TimeZone]))
 
@@ -303,3 +304,8 @@
                       (vector? y) (concat x y)
                       :else y))
               a b))
+
+(defn bytes->base64-str
+  "Takes an array of bytes and returns the base64 encoded string"
+  [bb]
+  (String. (Base64/encodeBase64 bb)))

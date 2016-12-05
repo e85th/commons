@@ -93,3 +93,7 @@
   "Add a bearer authorization in to the request headers"
   [req token]
   (assoc-in req [:headers "Authorization"] (str "Bearer " token)))
+
+(s/defn query-params
+  [req params-map]
+  (update-in req [:query-params] merge params-map))

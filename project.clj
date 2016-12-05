@@ -1,4 +1,4 @@
-(defproject e85th/commons "0.1.3"
+(defproject e85th/commons "0.1.4"
   :description "Various infrastructure and utilities to bootstrap an application/server."
   :url "http://github.com/e85th/commons"
   :license {:name "Apache License 2.0"
@@ -14,7 +14,7 @@
                  [me.raynes/fs "1.4.6"]
 
                  ;; -- Logging
-                 [com.taoensso/timbre "4.6.0"]
+                 [com.taoensso/timbre "4.7.4"]
 
                  ;; -- contracts
                  [prismatic/schema "1.1.2"]
