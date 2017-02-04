@@ -27,7 +27,6 @@
   [dt]
   (fmt/unparse (fmt/formatter :year-month-day) dt))
 
-
 (defn ts->str
   [dt]
   (fmt/unparse (fmt/formatter :date-time) dt))

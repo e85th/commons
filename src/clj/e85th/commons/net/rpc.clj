@@ -4,6 +4,7 @@
             [cheshire.core :as json]
             [clojure.core.match :refer [match]]
             [schema.core :as s]
+            [taoensso.timbre :as log]
             [clojure.string :as string]
             [clojure.edn :as edn]))
 
@@ -45,14 +46,22 @@
      (non-success-fn resp))))
 
 (defn parse-response-body
-  [{:keys [body headers] :as resp}]
-  (let [{:keys [content-type]} headers
-        ct-name (content-type->name content-type)]
-    (case ct-name
-      :json (json/parse-string body true)
-      :edn (edn/read-string body)
-      :other body
-      body)))
+  ([resp]
+   (parse-response-body {} resp))
+  ([edn-read-opts {:keys [body headers] :as resp}]
+   (let [{:keys [content-type]} headers
+         ct-name (content-type->name content-type)]
+     (log/infof "content-type: %s, ct-name: %s" content-type ct-name)
+     (log/infof "response headers: %s" headers)
+     (log/infof "response body: %s" body)
+     (case ct-name
+       :json (json/parse-string body true)
+       :edn (let [edn-str (cond-> body
+                            (instance? java.io.InputStream body) slurp)]
+              (log/infof "edn-str: %s" edn-str)
+              (edn/read-string edn-read-opts edn-str))
+       :other body
+       body))))
 
 (def ^{:doc "Checks for a successful response and parses the response body to a clojure data structure"}
   parse-successful-response (comp parse-response-body check-successful-response))

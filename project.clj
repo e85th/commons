@@ -27,6 +27,7 @@
 
                  ;; -- JSON
                  [cheshire "5.6.3"]
+                 [com.cognitect/transit-clj "0.8.297"]
                  ;; -- DateTime
                  [clj-time "0.12.0"]
                  [org.clojure/data.csv "0.1.3"]
