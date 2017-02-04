@@ -77,7 +77,7 @@
                                             [org.clojure/tools.nrepl "0.2.12"]
                                             [eftest "0.1.1"]]
                              :source-paths   ["dev/src"]
-          .nrepl-history                   :resource-paths ["dev/resources"]
+                             :resource-paths ["dev/resources"]
                              :repl-options {:init-ns user}
                              :env {:port "7000"}}
              :project/test  {}}
