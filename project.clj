@@ -1,4 +1,4 @@
-(defproject e85th/commons "0.1.4"
+(defproject e85th/commons "0.1.5"
   :description "Various infrastructure and utilities to bootstrap an application/server."
   :url "http://github.com/e85th/commons"
   :license {:name "Apache License 2.0"
@@ -77,7 +77,7 @@
                                             [org.clojure/tools.nrepl "0.2.12"]
                                             [eftest "0.1.1"]]
                              :source-paths   ["dev/src"]
-                             :resource-paths ["dev/resources"]
+          .nrepl-history                   :resource-paths ["dev/resources"]
                              :repl-options {:init-ns user}
                              :env {:port "7000"}}
              :project/test  {}}
