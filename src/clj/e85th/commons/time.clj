@@ -22,12 +22,12 @@
   (add-days -1 (t/now)))
 
 
-(defn date->str
+(defn ^String date->str
   "DateTime formatted to year-month-day ie 2016-08-03"
   [dt]
   (fmt/unparse (fmt/formatter :year-month-day) dt))
 
-(defn ts->str
+(defn ^String ts->str
   [dt]
   (fmt/unparse (fmt/formatter :date-time) dt))
 
