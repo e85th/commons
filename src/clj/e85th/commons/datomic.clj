@@ -43,6 +43,16 @@
 
 (def get-entity-with-attr! (ex/wrap-not-found get-entity-with-attr))
 
+(defn get-all-entities-with-attr
+  "Answers with all entities that have the specified attribute "
+  [db attr]
+  ;; FIXME: propbably a way to not use flatten
+  (flatten (d/q '[:find (pull ?eid [*] ...)
+                  :in $ ?attr
+                  :where [?eid ?attr]]
+                (get-db* db)
+                attr)))
+
 (defn get-partitions
   "Enumerates all partitions in the db."
   [db]
