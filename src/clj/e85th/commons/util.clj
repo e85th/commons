@@ -288,6 +288,16 @@
            {}
            (group-by key-fn xs))))
 
+(defn intersect-with
+  "Returns a map whose keys exist in boty map-1 and map-2. f is a 2 arity function
+   that is invoked wht the value from map-1 and map-2 respectively for each matching key."
+  [f map-1 map-2]
+  (reduce (fn [m [k v]]
+            (cond-> m
+              (contains? map-2 k) (assoc k (f v (map-2 k)))))
+          {}
+          map-1))
+
 (defn install-aviso-schema-prefer-methods!
   "Installs Aviso Exception dispatch prefer-methods. Without this, actual exceptions are lost."
   []

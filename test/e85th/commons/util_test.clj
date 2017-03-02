@@ -39,6 +39,15 @@
       (is (= {"role" #{"r1" "r2"} "permission" #{"p1" "p2"}}
              (u/group-by+ :kind :name set input))))))
 
+(deftest intersect-with-test
+  (is (= {} (u/intersect-with + {} {:a 1})))
+  (is (= {:a 3} (u/intersect-with + {:a 2} {:a 1})))
+  (is (= {:a 3} (u/intersect-with + {:a 2} {:a 1 :b 3})))
+  (is (= {:a 3 :b 7} (u/intersect-with + {:a 2 :b 4} {:a 1 :b 3})))
+  (is (= {nil 3 :b 7} (u/intersect-with + {nil 2 :b 4} {nil 1 :b 3})))
+  (is (= {nil 2 :b 12} (u/intersect-with * {nil 2 :b 4} {nil 1 :b 3})))
+  (is (= {nil 2/1 :b 4/3} (u/intersect-with / {nil 2 :b 4} {nil 1 :b 3}))))
+
 (deftest parse-bool-test
   (is (true? (u/parse-bool "true")))
   (is (true? (u/parse-bool "True")))
