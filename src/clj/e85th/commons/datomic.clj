@@ -53,6 +53,18 @@
                 (get-db* db)
                 attr)))
 
+
+(defn get-entities-with-attr-by-ids
+  "Get all entities by id which also have the specified attribute.
+   If the ids is an empty seq then returns an empty seq."
+  [db attr ids]
+  (if (seq ids)
+    (flatten (d/q '[:find (pull ?eid [*] ...)
+                    :in $ ?attr [?eid ...]
+                    :where [?eid ?attr]]
+                  (get-db* db) attr ids))
+    []))
+
 (defn get-partitions
   "Enumerates all partitions in the db."
   [db]

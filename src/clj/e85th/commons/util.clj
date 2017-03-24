@@ -6,7 +6,8 @@
             [taoensso.timbre :as log]
             [taoensso.timbre.appenders.core :as appenders]
             [taoensso.timbre.appenders.3rd-party.rotor :as rotor]
-            [clojure.string :as string])
+            [clojure.string :as string]
+            [clojure.set :as set])
   (:import [java.sql SQLException]
            [org.apache.commons.codec.binary Base64]
            [org.joda.time DateTimeZone DateTime]

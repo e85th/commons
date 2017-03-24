@@ -1,4 +1,4 @@
-(defproject e85th/commons "0.1.7"
+(defproject e85th/commons "0.1.8"
   :description "Various infrastructure and utilities to bootstrap an application/server."
   :url "http://github.com/e85th/commons"
   :license {:name "Apache License 2.0"
@@ -44,12 +44,7 @@
                  [slingshot "0.12.2"]
 
                  ;; -- AWS
-                 [amazonica "0.3.66" :exclusions [com.amazonaws/aws-java-sdk]]
-                 [com.amazonaws/aws-java-sdk-core "1.11.18"]
-                 [com.amazonaws/aws-java-sdk-s3 "1.11.18"]
-                 [com.amazonaws/aws-java-sdk-sqs "1.11.18"]
-                 [com.amazonaws/aws-java-sdk-sns "1.11.18"]
-                 [com.amazonaws/aws-java-sdk-ses "1.11.18"]
+                 [amazonica "0.3.66" :scope "provided"]
 
                  ;; -- FTP
                  [commons-net "3.5"]]
