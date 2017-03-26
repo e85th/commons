@@ -51,14 +51,10 @@
   ([edn-read-opts {:keys [body headers] :as resp}]
    (let [{:keys [content-type]} headers
          ct-name (content-type->name content-type)]
-     (log/infof "content-type: %s, ct-name: %s" content-type ct-name)
-     (log/infof "response headers: %s" headers)
-     (log/infof "response body: %s" body)
      (case ct-name
        :json (json/parse-string body true)
        :edn (let [edn-str (cond-> body
                             (instance? java.io.InputStream body) slurp)]
-              (log/infof "edn-str: %s" edn-str)
               (edn/read-string edn-read-opts edn-str))
        :other body
        body))))
