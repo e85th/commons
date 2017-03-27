@@ -113,9 +113,10 @@
   "Reads the current tag that the reader is on. Adds the tag to the path.
    Finds any start element listener for the path and calls it."
   [^XMLStreamReader rdr {:keys [ctx path path->data path->listeners] :as state}]
-  (let [path (conj path (tag rdr))
+  (let [cur-tag (tag rdr)
+        path (conj path cur-tag)
         listener (start-listener path->listeners path)
-        element {:attrs (attrs rdr)}]
+        element {:attrs (attrs rdr) :name cur-tag}]
     (assoc state :ctx (listener ctx element) :path path :path->data (assoc path->data path element))))
 
 (defn- on-end-element
@@ -190,10 +191,12 @@
 
 (defn root
   "Gets the root tag as a keyword."
-  [source]
-  (with-open [src (io/reader source)]
-    (loop [rdr (make-stream-reader src)]
-      (if (and (.hasNext rdr)
-               (= XMLStreamConstants/START_ELEMENT (.next rdr)))
-        (tag rdr)
-        (recur rdr)))))
+  ([source]
+   (root {} source))
+  ([xml-opts source]
+   (with-open [src (io/reader source)]
+     (loop [rdr (make-stream-reader xml-opts src)]
+       (if (and (.hasNext rdr)
+                (= XMLStreamConstants/START_ELEMENT (.next rdr)))
+         (tag rdr)
+         (recur rdr))))))

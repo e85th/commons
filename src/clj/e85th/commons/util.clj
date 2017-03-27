@@ -299,6 +299,12 @@
           {}
           map-1))
 
+(defn conform-map
+  "select-keys on map with keys from kmap and renamed keys to be from kmap."
+  [map kmap]
+  (-> (select-keys map (keys kmap))
+      (set/rename-keys kmap)))
+
 (defn install-aviso-schema-prefer-methods!
   "Installs Aviso Exception dispatch prefer-methods. Without this, actual exceptions are lost."
   []
