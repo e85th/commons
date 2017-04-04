@@ -1,4 +1,4 @@
-(defproject e85th/commons "0.1.11"
+(defproject e85th/commons "0.1.12"
   :description "Various infrastructure and utilities to bootstrap an application/server."
   :url "http://github.com/e85th/commons"
   :license {:name "Apache License 2.0"
@@ -18,7 +18,7 @@
                  [com.taoensso/timbre "4.7.4"]
 
                  ;; -- contracts
-                 [prismatic/schema "1.1.2"]
+                 [prismatic/schema "1.1.4"]
 
                  ;; -- async http requests
                  [http-kit "2.2.0"]
@@ -43,8 +43,6 @@
 
                  [slingshot "0.12.2"]
 
-                 ;; -- AWS
-                 [amazonica "0.3.66" :scope "provided"]
 
                  ;; -- FTP
                  [commons-net "3.5"]]
