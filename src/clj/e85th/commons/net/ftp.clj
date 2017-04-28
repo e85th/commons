@@ -49,7 +49,7 @@
    (with-open [outstream (java.io.FileOutputStream. (io/as-file local-name))]
      (let [success? (.retrieveFile client remote-name outstream)]
        (when-not success?
-         (throw (ex/new-generic-exception ::ftp-get-failed "FTP get failed." {:remote-name remote-name :local-name local-name})))))))
+         (throw (ex/generic ::ftp-get-failed "FTP get failed." {:remote-name remote-name :local-name local-name})))))))
 
 (defn cd
   "Change directory."

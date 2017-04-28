@@ -5,11 +5,13 @@
             [clojure.test :refer :all]))
 
 (deftest type+msgs-test
-  (is (= [:foo/type ["hello"]]
-         (ex/type+msgs (ex/new-validation-exception :foo/type "hello"))))
-  (is (= [:foo/type ["hello" "foo"]]
-         (ex/type+msgs (ex/new-validation-exception :foo/type ["hello" "foo"]))))
-  (is (= [ex/not-found ["Resource not found."]]
-         (ex/type+msgs (ex/new-not-found-exception))))
-  (is (= [ex/not-found ["Did not find it."]]
-         (ex/type+msgs (ex/new-not-found-exception "Did not find it.")))))
+  (is (= [:foo/type ":foo/type"]
+         (ex/type+msg (ex/validation :foo/type))))
+  (is (= [:foo/type "hello"]
+         (ex/type+msg (ex/validation :foo/type "hello"))))
+  (is (= [:foo/type "hello foo"]
+         (ex/type+msg (ex/validation :foo/type "hello foo"))))
+  (is (= [ex/not-found "Resource not found."]
+         (ex/type+msg (ex/not-found))))
+  (is (= [ex/not-found "Did not find it."]
+         (ex/type+msg (ex/not-found "Did not find it.")))))

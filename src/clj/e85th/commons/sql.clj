@@ -57,7 +57,7 @@
 
 (s/defn query
   "Returns a seq of maps representing the result set.
-  (sql/query! (:db system) [\"select * from typeform.evideen_signup where id = ?\" 12]"
+  (sql/query (:db system) [\"select * from typeform.evideen_signup where id = ?\" 12]"
   [db sql-and-params]
   (jdbc/query db sql-and-params {:identifiers as-clj-identifier}))
 

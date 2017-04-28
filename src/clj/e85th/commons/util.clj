@@ -305,6 +305,12 @@
   (-> (select-keys map (keys kmap))
       (set/rename-keys kmap)))
 
+(defn key=
+  "Returns a predicate that takes a map as an argument.
+   The predicate applies k to the map and does an equality check against v."
+  [k v]
+  (comp (partial = v) k))
+
 (defn install-aviso-schema-prefer-methods!
   "Installs Aviso Exception dispatch prefer-methods. Without this, actual exceptions are lost."
   []

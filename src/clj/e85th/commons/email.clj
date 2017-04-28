@@ -4,7 +4,8 @@
             [com.stuartsierra.component :as component]
             [taoensso.timbre :as log]
             [e85th.commons.util :as u]
-            [postal.core :as postal])
+            [postal.core :as postal]
+            [clojure.string :as str])
   (:import [clojure.lang IFn]))
 
 (def html-content-type "text/html")
@@ -92,6 +93,29 @@
 
 
 (s/defn valid?
-  "Valid email address?. The regex was copied from the bouncer library."
+  "Valid email address?. The regex was copied from regular-expressions.info"
   [address :- s/Str]
-  (some? (re-seq #"^[^@]+@[^@\\.]+[\\.].+" address)))
+  (some? (re-seq #"^[a-z0-9._%+-]+@[a-z0-9.-]+\.[a-z]{2,}$" (str/lower-case address))))
+
+
+(s/defn domain :- s/Str
+  "Parse the domain from a valid email address ie foo@example.com returns example.com
+   An invalid email address will throw an AssertionError."
+  [s :- s/Str]
+  (let [parts (str/split s #"@")]
+    (assert (= 2 (count parts)))
+    (second parts)))
+
+(s/defn username :- s/Str
+  "Parse the username from a valid email address ie foo@example.com returns foo.
+   An invalid email address will throw an AssertionError."
+  [s :- s/Str]
+  (let [parts (str/split s #"@")]
+    (assert (= 2 (count parts)))
+    (first parts)))
+
+
+(s/defn normalize :- s/Str
+  "Does not lower-case because the local part can be case sensitive."
+  [s :- s/Str]
+  (str/trim s))

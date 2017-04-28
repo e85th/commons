@@ -11,8 +11,10 @@
 (s/defn new-app
   "Creates an App defrecord which can be used to assoc all dependencies on to.
    deps is what is passed to component/using"
-  [deps :- (s/conditional map? {s/Keyword s/Keyword} :else [s/Keyword])]
-  (component/using (map->App {}) deps))
+  ([]
+   (map->App {}))
+  ([deps :- (s/conditional map? {s/Keyword s/Keyword} :else [s/Keyword])]
+   (component/using (map->App {}) deps)))
 
 (defn component-keys
   "Given [:a 1 :b 2] returns [:a :b]"

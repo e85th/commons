@@ -65,7 +65,7 @@
 
   (token->data! [this token]
     (or (token->data this token)
-        (throw (ex/new-auth-exception token-decrypt-failed-ex "Token decrypt failed."))))
+        (throw (ex/auth token-decrypt-failed-ex "Token decrypt failed."))))
 
   (backend [this]
     (:backend this)))
