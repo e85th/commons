@@ -7,7 +7,8 @@
             [taoensso.timbre.appenders.core :as appenders]
             [taoensso.timbre.appenders.3rd-party.rotor :as rotor]
             [clojure.string :as string]
-            [clojure.set :as set])
+            [clojure.set :as set]
+            [clojure.string :as str])
   (:import [java.sql SQLException]
            [org.apache.commons.codec.binary Base64]
            [org.joda.time DateTimeZone DateTime]
@@ -332,3 +333,6 @@
   "Takes an array of bytes and returns the base64 encoded string"
   [bb]
   (String. (Base64/encodeBase64 bb)))
+
+
+(def ^{:doc "Opposite of str/blank?"} not-blank? (complement str/blank?))
