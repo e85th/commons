@@ -97,6 +97,7 @@
   [address :- s/Str]
   (some? (re-seq #"^[a-z0-9._%+-]+@[a-z0-9.-]+\.[a-z]{2,}$" (str/lower-case address))))
 
+(def invalid? (complement valid?))
 
 (s/defn domain :- s/Str
   "Parse the domain from a valid email address ie foo@example.com returns example.com

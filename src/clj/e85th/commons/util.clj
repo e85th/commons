@@ -241,6 +241,10 @@
           {}
           m))
 
+(defn schema-keys
+  [m]
+  (map #(if (s/optional-key? %) (:k %) %) (keys m)))
+
 (defn schema->update-schema
   "Takes a map schema and makes all keys optional and dissocs the id."
   [m]

@@ -1,5 +1,6 @@
 (ns e85th.commons.util-test
   (:require [clojure.test :refer :all]
+            [schema.core :as s]
             [e85th.commons.util :as u]))
 
 (deftest normalize-env-test
@@ -60,3 +61,9 @@
   (is (false? (u/parse-bool "")))
   (is (false? (u/parse-bool nil)))
   (is (false? (u/parse-bool "false"))))
+
+
+(deftest schema-keys-test
+  (is (= [:a :b :c] (u/schema-keys {:a s/Str :b s/Str :c s/Str})))
+  (is (= [:a :b :c] (u/schema-keys {(s/optional-key :a) s/Str :b s/Str :c s/Str})))
+  )

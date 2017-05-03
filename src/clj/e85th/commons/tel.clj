@@ -120,3 +120,6 @@
      (throw (PhoneNumberException. "Can't format a nil phone number."))))
   (normalize [this]
     (throw (PhoneNumberException. "Can't normalize a nil phone number."))))
+
+
+(def invalid? (complement valid?))
