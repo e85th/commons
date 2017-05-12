@@ -10,7 +10,7 @@
             [clojure.set :as set]
             [clojure.string :as str])
   (:import [java.sql SQLException]
-           [org.apache.commons.codec.binary Base64]
+           [org.apache.commons.codec.binary Base64 Hex]
            [org.joda.time DateTimeZone DateTime]
            [java.util UUID TimeZone]))
 
@@ -207,7 +207,12 @@
   []
   (str (UUID/randomUUID)))
 
-
+(defn secure-random-hex
+  "generates a secure random hex string of size 2n"
+  [n]
+  (let [bb (byte-array n)]
+    (-> (java.security.SecureRandom.) (.nextBytes bb))
+    (-> bb Hex/encodeHex String.)))
 
 (defn hostname
   "Answers with the host name for the current machine."

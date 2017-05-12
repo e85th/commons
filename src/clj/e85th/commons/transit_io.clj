@@ -5,7 +5,7 @@
   (:import [org.joda.time DateTime ReadableInstant]
            [java.io ByteArrayInputStream ByteArrayOutputStream]))
 
-(def joda-time-writer
+(def joda-time-write-handler
   (transit/write-handler
    (constantly "m")
    (fn [v] (-> ^ReadableInstant v .getMillis))
@@ -13,10 +13,12 @@
 
 
 (def writers
-  {ReadableInstant joda-time-writer})
+  {ReadableInstant joda-time-write-handler})
 
 (def readers
-  {"m" t-coerce/from-long})
+  {"m"  (transit/read-handler
+         (fn [s]
+           (DateTime. (Long/parseLong s))))})
 
 (defn encode
   "encode a clojure data structure as transit+json string."

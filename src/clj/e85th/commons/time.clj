@@ -4,7 +4,7 @@
             [clj-time.format :as fmt]
             [schema.core :as s]
             [clojure.string :as string])
-  (:import [org.joda.time DateTime]
+  (:import [org.joda.time DateTime DateTimeZone]
            [clojure.lang IFn]))
 
 
@@ -66,3 +66,10 @@
      (if (seq t-comps)
        (string/join ", " (reduce reducer [] (map vector t-comps units)))
        "0 ms"))))
+
+(s/defn with-zone-retain-fields
+  "Gets the equivalent UTC DateTime if the timezone were changed to timezone.
+   Use to turn 2017-12-11T18:00:00Z and you want to
+   UTC equivalent "
+  [date :- DateTime timezone :- DateTimeZone]
+  (.withZoneRetainFields date timezone))
