@@ -173,8 +173,22 @@
    {:appenders {:rotor (rotor/rotor-appender {:path log-file :max-size (* 1024 1024 250)}) ; log rotate files 250 MB
                 :println (appenders/println-appender)}}))
 
+
+(defn- coerce-to-date-time
+  "This function is needed because when using transit or edn, the data is already
+   parsed to a DateTime so just return the DateTime."
+  [x]
+  (let [f (cond
+            (instance? DateTime x) identity
+            (instance? java.util.Date x) time-coerce/from-date
+            (integer? x) time-coerce/from-long
+            (string? x) time-coerce/from-string)]
+    (when-not f
+      (throw (Exception. (str "No suitable DateTime coercion for: " (class x)))))
+    (f x)))
+
 (def schema-string-coercions
-  (merge schema-coerce/+string-coercions+ {DateTime time-coerce/from-string s/Keyword keyword}))
+  (merge schema-coerce/+string-coercions+ {DateTime coerce-to-date-time s/Keyword keyword}))
 
 (defn schema-string-coercion-matcher
   "Pulled from schema.coerce"
