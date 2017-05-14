@@ -42,7 +42,8 @@
 (s/defn env->subject-prefixer :- IFn
   "Generates a prefixer that prefixes [TEST] if non prod env."
   [env-name]
-  (let [prefix (if-not (u/production? env-name) "[TEST] ")]
+  (let [prefix (when-not (u/production? env-name)
+                 "[TEST] ")]
     (make-subject-prefixer prefix)))
 
 (defn- send-message
@@ -51,8 +52,8 @@
    subject-modifier-fn
    {:keys [subject body content-type] :or {content-type default-content-type} :as msg}]
   (s/validate Message msg)
-  (let [msg (merge {:subject (subject-modifier-fn subject)
-                    :body [{:type content-type :content body}]} msg)
+  (let [msg (merge msg {:subject (subject-modifier-fn subject)
+                        :body [{:type content-type :content-type content-type :content body}]})
         {:keys [code] :as response} (postal/send-message smtp-config msg)]
     (assert (zero? code) (format "Error sending email. %s" response))))
 
@@ -76,7 +77,8 @@
   ([smtp-config :- SmtpConfig]
    (new-smtp-email-sender smtp-config identity))
   ([smtp-config :- SmtpConfig subject-modifier-fn :- IFn]
-   (map->SmtpEmailSender (merge {:subject-modifier-fn identity} smtp-config))))
+   (map->SmtpEmailSender {:smtp-config smtp-config
+                          :subject-modifier-fn subject-modifier-fn})))
 
 (defrecord NilEmailSender []
   component/Lifecycle

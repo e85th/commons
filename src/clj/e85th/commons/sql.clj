@@ -138,12 +138,14 @@
 
 (s/defn ^:private update* :- s/Int
   ([db table :- s/Keyword row :- {s/Keyword s/Any} where-clause]
-   (update* db table row where-clause false))
+   (update* db table row where-clause true))
   ([db table :- s/Keyword row :- {s/Keyword s/Any} where-clause optimistic? :- s/Bool]
    (let [n (first (jdbc/update! db table row where-clause {:entities as-sql-identifier}))]
-     (if (and optimistic? (zero? n))
-       (throw (NoRowsUpdatedException.))
-       n))))
+
+     (when (and optimistic? (zero? n))
+       (throw (NoRowsUpdatedException.)))
+
+     n)))
 
 (s/defn update! :- s/Int
   "Returns count of rows updated.
@@ -152,7 +154,9 @@
   ([db table :- s/Keyword row :- {s/Keyword s/Any} where-clause]
    (update* db table row where-clause))
   ([db table :- s/Keyword row where-clause user-id :- s/Int]
-   (update* db table (assoc-update-audits user-id row) where-clause)))
+   (update! db table row where-clause user-id true))
+  ([db table :- s/Keyword row where-clause user-id :- s/Int optimistic? :- s/Bool]
+   (update* db table (assoc-update-audits user-id row) where-clause optimistic?)))
 
 (s/defn unique-violation? :- s/Bool
   "Postgres unique violation for the exception? https://www.postgresql.org/docs/current/static/errcodes-appendix.html"
