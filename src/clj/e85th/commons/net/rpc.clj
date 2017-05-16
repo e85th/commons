@@ -92,7 +92,7 @@
   ([req body]
    (cond-> req
      true (update-in [:headers] merge {"Content-Type" "application/json" "Accept" "application/json"})
-     body (assoc-in [:body] (json/encode body)))))
+     body (assoc-in [:body] (json/generate-string body)))))
 
 (s/defn bearer-auth
   "Add a bearer authorization in to the request headers"
