@@ -63,12 +63,17 @@
   parse-successful-response (comp parse-response-body check-successful-response))
 
 (s/defn call!
-  "Returns a promise. Derefing the promise will yield the http response. http-opts
-   is a map of options used by http-kit."
+  "Returns a promise if no callback is passed in.
+   Derefing the promise will yield the http response.
+   http-opts is a map of options used by http-kit."
   ([method :- s/Keyword url :- s/Str http-opts]
    (call! (assoc http-opts :method method :url url)))
   ([req]
-   (http/request req)))
+   (http/request req))
+  ([method :- s/Keyword url :- s/Str http-opts cb]
+   (call! (assoc http-opts :method method :url url) cb))
+  ([req cb]
+   (http/request req cb)))
 
 (s/defn sync-call!
   "Makes a blocking http call.  Returns the parsed response body as a clojure
