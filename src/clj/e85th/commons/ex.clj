@@ -2,7 +2,7 @@
   (:require [schema.core :as s]
             [e85th.commons.util :as u]
             [clojure.string :as str])
-  (:import [e85th.commons.exceptions ValidationExceptionInfo AuthExceptionInfo]))
+  (:import [e85th.commons.exceptions ValidationExceptionInfo AuthExceptionInfo ForbiddenExceptionInfo]))
 
 (def ex-type ::ex-type)
 (def ex-msg ::ex-msg)
@@ -49,6 +49,23 @@
 (defn auth?
   [x]
   (instance? AuthExceptionInfo x))
+
+(s/defn forbidden
+  "No single arity which just takes msg-or-msgs because there should be specificity
+   which can be used for UIs to display more user friendly message potentially. kind becomes the
+   error code in keyword form."
+  ([kind]
+   (forbidden kind (str kind)))
+  ([kind msg]
+   (forbidden kind msg {}))
+  ([kind msg data-map]
+   (forbidden kind msg data-map nil))
+  ([kind :- s/Keyword msg :- s/Str data-map cause]
+   (ForbiddenExceptionInfo. msg (merge data-map {ex-type kind ex-msg msg}) cause)))
+
+(defn forbidden?
+  [x]
+  (instance? ForbiddenExceptionInfo x))
 
 (defn not-found
   ([]
