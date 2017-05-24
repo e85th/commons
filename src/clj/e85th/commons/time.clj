@@ -73,3 +73,6 @@
    UTC equivalent "
   [date :- DateTime timezone :- DateTimeZone]
   (.withZoneRetainFields date timezone))
+
+(def ^{:doc "Answers with a seq of the constitutents of the date time. [year month day  hour minute second ms]"}
+  deconstruct (juxt t/year t/month t/day t/hour t/minute t/second t/milli))
