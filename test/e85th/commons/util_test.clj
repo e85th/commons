@@ -65,5 +65,30 @@
 
 (deftest schema-keys-test
   (is (= [:a :b :c] (u/schema-keys {:a s/Str :b s/Str :c s/Str})))
-  (is (= [:a :b :c] (u/schema-keys {(s/optional-key :a) s/Str :b s/Str :c s/Str})))
-  )
+  (is (= [:a :b :c] (u/schema-keys {(s/optional-key :a) s/Str :b s/Str :c s/Str}))))
+
+
+
+(deftest elide-values-test
+  (let [m {:a "foo" :b "bar"}]
+    (is (= m (u/elide-values #{} m))))
+
+  (is (= {:a "foo" :b u/elided}
+         (u/elide-values #{:b} {:a "foo" :b "bar"})))
+
+  (is (= {:a "foo" :b u/elided :c u/elided :d 23}
+         (u/elide-values #{:b :c} {:a "foo" :b "bar" :c "baz" :d 23}))))
+
+(deftest elide-paths-test
+  (let [m {:a {:b "foo" :c "bar"}}]
+    (is (= m (u/elide-paths m []))))
+
+  (is (= {:a {:b u/elided :c "bar"}}
+         (u/elide-paths {:a {:b u/elided :c "bar"}} [:a :b])))
+
+  (is (= {:a {:b u/elided :c "bar"}
+          :d u/elided}
+         (u/elide-paths {:a {:b u/elided :c "bar"}
+                         :d 23}
+                        [:a :b]
+                        [:d]))))

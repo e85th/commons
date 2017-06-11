@@ -6,6 +6,7 @@
             [taoensso.timbre :as log]
             [taoensso.timbre.appenders.core :as appenders]
             [taoensso.timbre.appenders.3rd-party.rotor :as rotor]
+            [clojure.walk :as walk]
             [clojure.string :as string]
             [clojure.set :as set]
             [clojure.string :as str])
@@ -47,7 +48,7 @@
           environment-info))
 
 (s/defn known-env?
-  [env :- s/Keyword]
+  [env :- (s/maybe s/Keyword)]
   (some? (environment-info env)))
 
 (defn known-envs
@@ -209,12 +210,18 @@
 
 (defn periodically
   "Starts a new user thread and every period ms calls f.
-   f is a no arg function. Returns the thread that is started."
+   f is a no arg function. Returns the thread that is started.
+   Call Thread/interupt to have the thread terminated when it is
+   sleeping. f may wish to check Thread/interrupted and throw
+   an InterruptedException when heavy processing is anticipated."
   [thread-name period f]
   (start-user-thread thread-name (fn []
-                                   (while true
-                                     (f)
-                                     (Thread/sleep period)))))
+                                   (try
+                                     (while true
+                                       (f)
+                                       (Thread/sleep period))
+                                     (catch InterruptedException e
+                                       (log/infof "%s thread interrupted." thread-name))))))
 
 (defn uuid
   "Generates a new uuid."
@@ -359,3 +366,28 @@
 
 
 (def ^{:doc "Opposite of str/blank?"} not-blank? (complement str/blank?))
+
+(def elided "~elided~")
+
+(defn elide-values
+  "Walks the map eliding the values whose key appears in key-set."
+  [key-set m]
+  (walk/postwalk
+   (fn [x]
+     (let [[k v] (if (vector? x) x [])]
+       (if (and k (contains? key-set k))
+         [k elided]
+         x)))
+   m))
+
+(defn elide-paths
+  "paths is a collection of vectors that can be used to
+   navigate a collection. Each path must be a non empty
+   vector otherwise that path is skipped."
+  [coll & paths]
+  (reduce (fn [ans path]
+            (cond-> ans
+              (and (seq path)
+                   (some? (get-in ans path))) (assoc-in path elided)))
+          coll
+          paths))
