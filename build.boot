@@ -2,40 +2,53 @@
  :source-paths #{"src/java" "test"}
  :resource-paths #{"src/clj"}
  :dependencies '[[org.clojure/clojure "1.9.0-alpha15" :scope "provided"]
+
                  [org.clojure/java.jdbc "0.5.8"]
-                 [hikari-cp "1.7.2"] ; db connection pool
-                 [com.stuartsierra/component "0.3.1"]
+                 [hikari-cp "1.7.5"] ; db connection pool
+
+                 [com.stuartsierra/component "0.3.2"]
                  [com.datomic/datomic-free "0.9.5554" :scope "provided"]
+
                  ;; -- file system utils
                  [me.raynes/fs "1.4.6"]
+
                  ;; -- Logging
                  [com.taoensso/timbre "4.10.0"]
+
                  ;; -- contracts
                  [prismatic/schema "1.1.6"]
+
                  ;; -- async http requests
                  [http-kit "2.2.0"]
+
                  ;; -- pattern matching
                  [org.clojure/core.match "0.3.0-alpha4"]
-                 ;; -- JSON
-                 [cheshire "5.6.3"]
-                 ;; -- DateTime
-                 [clj-time "0.12.0"]
-                 [org.clojure/data.csv "0.1.3"]
-                 [com.googlecode.libphonenumber/libphonenumber "7.4.5"]
 
-                 [com.cognitect/transit-clj "0.8.297"]
+                 ;; -- JSON
+                 [cheshire "5.7.1"]
+                 [com.cognitect/transit-clj "0.8.300"]
+                 ;; -- DateTime
+                 [clj-time "0.13.0"]
+                 [org.clojure/data.csv "0.1.4"]
+
+                 [com.googlecode.libphonenumber/libphonenumber "8.5.2"]
+
                  ;; -- Email
-                 [com.draines/postal "2.0.0"]
+                 [com.draines/postal "2.0.2"]
+
                  ;; -- encryption/tokens
-                 [buddy "1.0.0"]
+                 [buddy "1.3.0"]
+
                  [slingshot "0.12.2"]
+
+
                  ;; -- FTP
-                 [commons-net "3.5"]
-                 ;; -- Test
-                 [org.clojure/tools.nrepl "0.2.12"]
+                 [commons-net "3.6"]
+                 [org.clojure/tools.nrepl "0.2.13"]
                  [cider/cider-nrepl "0.15.0-SNAPSHOT"]
                  [adzerk/boot-test "1.2.0" :scope "test"]
-                 [metosin/boot-alt-test "0.2.1" :scope "test"]]
+                 [metosin/boot-alt-test "0.2.1" :scope "test"]
+                 ]
 
  :repositories #(conj %
                       ["clojars" {:url "https://clojars.org/repo"
