@@ -6,7 +6,6 @@
             [buddy.sign.jwt :as jwt]
             [buddy.core.hash :as hash]
             [buddy.auth.backends.token :as token-backend]
-            [slingshot.slingshot :as ss]
             [taoensso.timbre :as log]
             [e85th.commons.ex :as ex])
   (:import [clojure.lang IFn]))
@@ -55,13 +54,20 @@
                  secret
                  (:opts this)))
 
-  (token->data [this token]
+  #_(token->data [this token]
     (ss/try+
      (dissoc (jwt/decrypt token secret) :exp)
      (catch [:type :validation] ex
        (log/infof "Token decrypt failed: %s" ex))
      (catch Exception ex
        (log/warnf ex))))
+  (token->data [this token]
+    (try
+     (dissoc (jwt/decrypt token secret) :exp)
+     (catch Exception ex
+       (if (some-> ex ex-data :type (= :validation))
+         (log/infof "Token decrypt failed: %s" ex)
+         (log/warnf ex)))))
 
   (token->data! [this token]
     (or (token->data this token)

@@ -1,4 +1,4 @@
-(defproject e85th/commons "0.1.21"
+(defproject e85th/commons "0.1.22"
   :description "Various infrastructure and utilities to bootstrap an application/server."
   :url "http://github.com/e85th/commons"
   :license {:name "Apache License 2.0"
@@ -41,9 +41,6 @@
                  ;; -- encryption/tokens
                  [buddy "1.3.0"]
 
-                 [slingshot "0.12.2"]
-
-
                  ;; -- FTP
                  [commons-net "3.6"]]
 
@@ -76,5 +73,6 @@
                              :env {:port "7000"}}
              :project/test  {}}
 
-  :deploy-repositories [["releases" :clojars]
-                        ["snapshots" :clojars]])
+
+  :deploy-repositories [["releases"  {:sign-releases false :url "https://clojars.org/repo"}]
+                        ["snapshots" {:sign-releases false :url "https://clojars.org/repo"}]])

@@ -8,6 +8,10 @@
   (start [this] this)
   (stop [this] this))
 
+(defmethod clojure.core/print-method App
+  [system ^java.io.Writer writer]
+  (.write writer "#<App>"))
+
 (s/defn new-app
   "Creates an App defrecord which can be used to assoc all dependencies on to.
    deps is what is passed to component/using"
