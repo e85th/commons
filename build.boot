@@ -1,16 +1,17 @@
 (set-env!
- :source-paths #{"src/clj" "src/java"}
- :resource-paths #{"src/clj" "test"}
- :dependencies '[[org.clojure/clojure "1.8.0"]
+ :source-paths #{"src/java" "test"}
+ :resource-paths #{"src/clj"}
+ :dependencies '[[org.clojure/clojure "1.9.0-alpha15" :scope "provided"]
                  [org.clojure/java.jdbc "0.5.8"]
                  [hikari-cp "1.7.2"] ; db connection pool
                  [com.stuartsierra/component "0.3.1"]
+                 [com.datomic/datomic-free "0.9.5554" :scope "provided"]
                  ;; -- file system utils
                  [me.raynes/fs "1.4.6"]
                  ;; -- Logging
-                 [com.taoensso/timbre "4.7.4"]
+                 [com.taoensso/timbre "4.10.0"]
                  ;; -- contracts
-                 [prismatic/schema "1.1.2"]
+                 [prismatic/schema "1.1.6"]
                  ;; -- async http requests
                  [http-kit "2.2.0"]
                  ;; -- pattern matching
@@ -21,62 +22,86 @@
                  [clj-time "0.12.0"]
                  [org.clojure/data.csv "0.1.3"]
                  [com.googlecode.libphonenumber/libphonenumber "7.4.5"]
+
+                 [com.cognitect/transit-clj "0.8.297"]
                  ;; -- Email
                  [com.draines/postal "2.0.0"]
                  ;; -- encryption/tokens
                  [buddy "1.0.0"]
                  [slingshot "0.12.2"]
-                 ;; -- AWS
-                 [amazonica "0.3.66" :exclusions [com.amazonaws/aws-java-sdk]]
-                 [com.amazonaws/aws-java-sdk-core "1.11.18"]
-                 [com.amazonaws/aws-java-sdk-s3 "1.11.18"]
-                 [com.amazonaws/aws-java-sdk-sqs "1.11.18"]
-                 [com.amazonaws/aws-java-sdk-sns "1.11.18"]
-                 [com.amazonaws/aws-java-sdk-ses "1.11.18"]
                  ;; -- FTP
                  [commons-net "3.5"]
                  ;; -- Test
-                 [adzerk/boot-test "1.1.2" :scope "test"]
-                 [metosin/boot-alt-test "0.2.1" :scope "test"]])
+                 [org.clojure/tools.nrepl "0.2.12"]
+                 [cider/cider-nrepl "0.15.0-SNAPSHOT"]
+                 [adzerk/boot-test "1.2.0" :scope "test"]
+                 [metosin/boot-alt-test "0.2.1" :scope "test"]]
 
-(set-env! :source-paths #{"test"})
-(require '[adzerk.boot-test :refer :all])
-(require '[metosin.boot-alt-test :refer [alt-test]])
+ :repositories #(conj %
+                      ["clojars" {:url "https://clojars.org/repo"
+                                  :username (System/getenv "CLOJARS_USER")
+                                  :password (System/getenv "CLOJARS_PASS")}]))
 
-(deftask testing
-  "Profile setup for running tests."
-  []
-  (set-env! :source-paths #(conj % "test"))
-  (javac)
-  identity)
+(require '[adzerk.boot-test :as boot-test])
+(require '[cider.tasks :refer [add-middleware]])
 
-(deftask unit-test
+(task-options! add-middleware {:middleware '[cider.nrepl.middleware.apropos/wrap-apropos
+                                             cider.nrepl.middleware.classpath/wrap-classpath
+                                             cider.nrepl.middleware.complete/wrap-complete
+                                             cider.nrepl.middleware.debug/wrap-debug
+                                             cider.nrepl.middleware.format/wrap-format
+                                             cider.nrepl.middleware.info/wrap-info
+                                             cider.nrepl.middleware.inspect/wrap-inspect
+                                             cider.nrepl.middleware.macroexpand/wrap-macroexpand
+                                             cider.nrepl.middleware.ns/wrap-ns
+                                             cider.nrepl.middleware.pprint/wrap-pprint
+                                             cider.nrepl.middleware.pprint/wrap-pprint-fn
+                                             cider.nrepl.middleware.refresh/wrap-refresh
+                                             cider.nrepl.middleware.resource/wrap-resource
+                                             cider.nrepl.middleware.stacktrace/wrap-stacktrace
+                                             cider.nrepl.middleware.test/wrap-test
+                                             cider.nrepl.middleware.trace/wrap-trace
+                                             cider.nrepl.middleware.out/wrap-out
+                                             cider.nrepl.middleware.undef/wrap-undef
+                                             cider.nrepl.middleware.version/wrap-version]})
+
+
+(deftask test
   "Runs the unit-test task"
   []
+  (comp
+   (javac)
+   (boot-test/test)))
 
-  (javac))
+
+
+(deftask build
+  "Builds a jar for deployment."
+  []
+  (comp
+   (javac)
+   (pom)
+   (jar)
+   (target)))
 
 (deftask dev
   "Starts the dev task."
   []
   (comp
    (repl)
-   (watch)
+   (watch)))
 
-   ))
-
-(deftask build
-  "Builds a jar for deployment."
+(deftask deploy
   []
   (comp
-   (pom)
-   (jar)
-   (target)))
+   (build)
+   (push)))
 
 (task-options!
  pom {:project 'e85th/commons
-      :version "0.1.4"
+      :version "0.1.22"
       :description "Various infrastructure and utilities to bootstrap an application/server."
       :url "http://github.com/e85th/commons"
       :scm {:url "http://github.com/e85th/commons"}
-      :license {"Apache License 2.0" "http://www.apache.org/licenses/LICENSE-2.0"}})
+      :license {"Apache License 2.0" "http://www.apache.org/licenses/LICENSE-2.0"}}
+ push {:repo "clojars"})
