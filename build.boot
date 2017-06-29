@@ -1,13 +1,13 @@
 (set-env!
  :source-paths #{"src/java" "test"}
  :resource-paths #{"src/clj"}
- :dependencies '[[org.clojure/clojure "1.9.0-alpha15" :scope "provided"]
+ :dependencies '[[org.clojure/clojure "1.9.0-alpha17" :scope "provided"]
 
-                 [org.clojure/java.jdbc "0.5.8"]
+                 [org.clojure/java.jdbc "0.7.0-alpha3"]
                  [hikari-cp "1.7.5"] ; db connection pool
 
                  [com.stuartsierra/component "0.3.2"]
-                 [com.datomic/datomic-free "0.9.5554" :scope "provided"]
+                 [com.datomic/datomic-free "0.9.5561.50" :scope "provided"]
 
                  ;; -- file system utils
                  [me.raynes/fs "1.4.6"]
@@ -84,7 +84,7 @@
 
 (task-options!
  pom {:project 'e85th/commons
-      :version "0.1.23"
+      :version "0.1.24"
       :description "Various infrastructure and utilities to bootstrap an application/server."
       :url "http://github.com/e85th/commons"
       :scm {:url "http://github.com/e85th/commons"}
