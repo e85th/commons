@@ -3,13 +3,13 @@
   :url "http://github.com/e85th/commons"
   :license {:name "Apache License 2.0"
             :url "http://www.apache.org/licenses/LICENSE-2.0"}
-  :dependencies [[org.clojure/clojure "1.9.0-alpha17" :scope "provided"]
-
-                 [org.clojure/java.jdbc "0.7.0-alpha3"]
-                 [hikari-cp "1.7.5"] ; db connection pool
+  :dependencies [[org.clojure/clojure "1.9.0-beta1" :scope "provided"]
+                 [superstring "2.1.0"]
+                 [org.clojure/java.jdbc "0.7.1"]
+                 [hikari-cp "1.8.0"] ; db connection pool
 
                  [com.stuartsierra/component "0.3.2"]
-                 [com.datomic/datomic-free "0.9.5561.50" :scope "provided"]
+                 [com.datomic/datomic-free "0.9.5561.59" :scope "provided"]
 
                  ;; -- file system utils
                  [me.raynes/fs "1.4.6"]
@@ -27,19 +27,19 @@
                  [org.clojure/core.match "0.3.0-alpha4"]
 
                  ;; -- JSON
-                 [cheshire "5.7.1"]
+                 [cheshire "5.8.0"]
                  [com.cognitect/transit-clj "0.8.300"]
                  ;; -- DateTime
-                 [clj-time "0.13.0"]
+                 [clj-time "0.14.0"]
                  [org.clojure/data.csv "0.1.4"]
 
-                 [com.googlecode.libphonenumber/libphonenumber "8.5.2"]
+                 [com.googlecode.libphonenumber/libphonenumber "8.8.2"]
 
                  ;; -- Email
                  [com.draines/postal "2.0.2"]
 
                  ;; -- encryption/tokens
-                 [buddy "1.3.0"]
+                 [buddy "2.0.0"]
 
                  ;; -- FTP
                  [commons-net "3.6"]]

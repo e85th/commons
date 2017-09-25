@@ -6,10 +6,9 @@
             [taoensso.timbre :as log]
             [taoensso.timbre.appenders.core :as appenders]
             [taoensso.timbre.appenders.3rd-party.rotor :as rotor]
+            [superstring.core :as str]
             [clojure.walk :as walk]
-            [clojure.string :as string]
-            [clojure.set :as set]
-            [clojure.string :as str])
+            [clojure.set :as set])
   (:import [java.sql SQLException]
            [org.apache.commons.codec.binary Base64 Hex]
            [org.joda.time DateTimeZone DateTime]
@@ -35,7 +34,7 @@
 
 (s/defn production?
   [env-name]
-  (-> env-name string/lower-case keyword (= :production)))
+  (-> env-name str/lower-case keyword (= :production)))
 
 (def development? (complement production?))
 
@@ -73,29 +72,29 @@
         "- Build Info                                                           -"
         "------------------------------------------------------------------------"
         (build-properties group-id artifact-id)]
-       (string/join \newline)))
+       (str/join \newline)))
 
 (defn build-version
   "Answers with the current version from pom.properties"
   [group-id artifact-id]
   (let [line (-> (build-properties group-id artifact-id)
-                 (string/split #"\n")
+                 (str/split #"\n")
                  (nth 2))]
-    (assert (string/starts-with? line "version=")
+    (assert (str/starts-with? line "version=")
             (format "Expected version line to start with version= but is %s" line))
-    (second (string/split line #"="))))
+    (second (str/split line #"="))))
 
 (s/defn log-file-with-suffix
   "log-file is a string that ends in .log.  Adds the suffix before the
    .log if there is a suffix."
   [log-file :- s/Str suffix :- (s/maybe s/Str)]
   (cond-> log-file
-    (seq suffix) (string/replace #".log$" (str "-" suffix ".log"))))
+    (seq suffix) (str/replace #".log$" (str "-" suffix ".log"))))
 
 (defn parse-bool
   ([x]
    (let [x (if (string? x)
-             (string/trim (string/lower-case x))
+             (str/trim (str/lower-case x))
              x)]
      (parse-bool x #{"true" "yes" "on" "1" 1 true})))
   ([x true-set]
@@ -103,19 +102,19 @@
 
 (defn parse-int
   [s]
-  (Integer/parseInt (string/trim s)))
+  (Integer/parseInt (str/trim s)))
 
 (defn parse-long
   [s]
-  (Long/parseLong (string/trim s)))
+  (Long/parseLong (str/trim s)))
 
 (defn parse-float
   [s]
-  (Float/parseFloat (string/trim s)))
+  (Float/parseFloat (str/trim s)))
 
 (defn parse-double
   [s]
-  (Double/parseDouble (string/trim s)))
+  (Double/parseDouble (str/trim s)))
 
 (defn coerce-int
   ([s]
@@ -306,7 +305,7 @@
 (defn current-process-id
   "Returns a string or throws an exception Not safe to use according to javadoc"
   []
-  (-> (java.lang.management.ManagementFactory/getRuntimeMXBean) .getName (string/split  #"@") first))
+  (-> (java.lang.management.ManagementFactory/getRuntimeMXBean) .getName (str/split  #"@") first))
 
 (defn group-by+
   "Similar to group by, but allows applying val-fn to each item in the grouped by list of each key.
@@ -391,3 +390,41 @@
                    (some? (get-in ans path))) (assoc-in path elided)))
           coll
           paths))
+
+
+(defn- tr-keys
+  "Adapted from clojure.walk/keywordize-keys.
+   Calls tr-key-fn for each map key encountered.
+   Recursively changes all keys to the transformation
+   provided by tr-key-fn."
+  [tr-key-fn m]
+  (let [f (fn [[k v]]
+            (if (or (string? k) (keyword? k))
+              [(tr-key-fn k) v]
+              [k v]))]
+    ;; only apply to maps
+    (walk/postwalk (fn [x]
+                     (if (map? x)
+                       (into {} (map f x)) x))
+                   m)))
+
+(defn lisp-case-keyword
+  "Turns :helloHow to :hello-how
+  Namespace is omitted in returned value."
+  [x]
+  (-> x name str/lisp-case keyword))
+
+(defn camel-case-keyword
+  "Namespace is omitted in returned value."
+  [x]
+  (-> x name str/camel-case keyword))
+
+(defn camel-case-keys
+  "Camel case all keys in map m."
+  [m]
+  (tr-keys camel-case-keyword m))
+
+(defn lisp-case-keys
+  "Lisp case all keys in map m."
+  [m]
+  (tr-keys lisp-case-keyword m))
