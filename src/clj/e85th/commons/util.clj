@@ -23,7 +23,7 @@
 (defn log-throwable
   ([^Throwable ex]
    (log-throwable ex ""))
-  ([^Throwable ex ^String uuid]
+  ([^Throwable ex uuid]
    (doseq [t (take-while identity (iterate (fn [^Throwable t]
                                              (if (instance? SQLException t)
                                                (.getNextException ^SQLException (cast SQLException t))
@@ -225,7 +225,7 @@
 (defn uuid
   "Generates a new uuid."
   []
-  (str (UUID/randomUUID)))
+  (UUID/randomUUID))
 
 (defn secure-random-hex
   "generates a secure random hex string of size 2n"

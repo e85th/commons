@@ -1,4 +1,4 @@
-(defproject e85th/commons "0.1.24"
+(defproject e85th/commons "0.1.25-alpha1"
   :description "Various infrastructure and utilities to bootstrap an application/server."
   :url "http://github.com/e85th/commons"
   :license {:name "Apache License 2.0"
