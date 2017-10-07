@@ -283,3 +283,16 @@
 (def ^:deprecated conform-map ext/conform-map)
 
 (def ^:deprecated key= ext/key=)
+
+
+(defn ^:deprecated coerce-int
+  ([s]
+   (try
+     (parse-int s)
+     (catch NumberFormatException ex
+       (int (parse-double s)))))
+  ([default-value s]
+   (try
+     (coerce-int s)
+     (catch NumberFormatException ex
+       default-value))))
