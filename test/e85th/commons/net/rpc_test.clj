@@ -1,25 +1,26 @@
 (ns e85th.commons.net.rpc-test
   (:require [e85th.commons.net.rpc :as rpc]
             [clojure.string :as string]
-            [clojure.test :refer :all]))
+            [expectations :refer :all]
+            [expectations.clojure.test :refer [defexpect]]))
 
-(deftest html-get-test
+(defexpect html-get-test
   (let [body (rpc/sync-call! :get "http://google.com" {})]
-    (is (string? body))
-    (is (string/starts-with? body "<!doctype html>"))))
+    (expect string? body)
+    (expect (string/starts-with? body "<!doctype html>"))))
 
-(deftest json-get-test
+(defexpect json-get-test
   (let [data (rpc/sync-call! :get "http://jsonplaceholder.typicode.com/posts/1" {})]
-    (is (= [:userId :id :title :body] (keys data)))))
+    (expect [:userId :id :title :body] (keys data))))
 
-(deftest json-post-test
+(defexpect json-post-test
   (let [data (rpc/sync-call! :post "http://jsonplaceholder.typicode.com/posts" {})]
-    (is (= {:id 101} data))))
+    (expect {:id 101} data)))
 
-(deftest json-put-test
+(defexpect json-put-test
   (let [data (rpc/sync-call! :put "http://jsonplaceholder.typicode.com/posts/1" {})]
-    (is (= {:id 1} data))))
+    (expect {:id 1} data)))
 
-(deftest json-delete-test
+(defexpect json-delete-test
   (let [data (rpc/sync-call! :delete "http://jsonplaceholder.typicode.com/posts/1" {})]
-    (is (= {} data))))
+    (expect {} data)))

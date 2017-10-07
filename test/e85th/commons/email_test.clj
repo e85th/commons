@@ -1,14 +1,15 @@
 (ns e85th.commons.email-test
   "Tests the email namespace."
   (:require [e85th.commons.email :as email]
-            [clojure.test :refer :all]))
+            [expectations :refer :all]
+            [expectations.clojure.test :refer [defexpect]]))
 
-(deftest domain
-  (is (= "example.com" (email/domain "foo@example.com")))
-  (is (thrown? AssertionError (email/domain "")))
-  (is (thrown? AssertionError (email/domain "foo@example.com@bx.com"))))
+(defexpect domain
+  (expect "example.com" (email/domain "foo@example.com"))
+  (expect AssertionError (email/domain ""))
+  (expect AssertionError (email/domain "foo@example.com@bx.com")))
 
-(deftest username
-  (is (= "foo" (email/username "foo@example.com")))
-  (is (thrown? AssertionError (email/username "")))
-  (is (thrown? AssertionError (email/username "foo@example.com@bx.com"))))
+(defexpect username
+  (expect "foo" (email/username "foo@example.com"))
+  (expect AssertionError (email/username ""))
+  (expect AssertionError (email/username "foo@example.com@bx.com")))

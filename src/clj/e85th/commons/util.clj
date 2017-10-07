@@ -7,6 +7,7 @@
             [taoensso.timbre.appenders.core :as appenders]
             [taoensso.timbre.appenders.3rd-party.rotor :as rotor]
             [superstring.core :as str]
+            [e85th.commons.ext :as ext]
             [clojure.walk :as walk]
             [clojure.set :as set])
   (:import [java.sql SQLException]
@@ -91,57 +92,6 @@
   (cond-> log-file
     (seq suffix) (str/replace #".log$" (str "-" suffix ".log"))))
 
-(defn parse-bool
-  ([x]
-   (let [x (if (string? x)
-             (str/trim (str/lower-case x))
-             x)]
-     (parse-bool x #{"true" "yes" "on" "1" 1 true})))
-  ([x true-set]
-   (some? (true-set x))))
-
-(defn parse-int
-  [s]
-  (Integer/parseInt (str/trim s)))
-
-(defn parse-long
-  [s]
-  (Long/parseLong (str/trim s)))
-
-(defn parse-float
-  [s]
-  (Float/parseFloat (str/trim s)))
-
-(defn parse-double
-  [s]
-  (Double/parseDouble (str/trim s)))
-
-(defn coerce-int
-  ([s]
-   (try
-     (parse-int s)
-     (catch NumberFormatException ex
-       (int (parse-double s)))))
-  ([default-value s]
-   (try
-     (coerce-int s)
-     (catch NumberFormatException ex
-       default-value))))
-
-(defn coerce-long
-  [s]
-  (try
-    (parse-long s)
-    (catch NumberFormatException ex
-      (long (parse-double s)))))
-
-(defn coerce-double
-  [s]
-  (if (string? s)
-    (parse-double s)
-    s))
-
-
 (defn add-shutdown-hook
   "Adds a shutdown hook. f is a no arg function."
   [^Runnable f]
@@ -222,10 +172,6 @@
                                      (catch InterruptedException e
                                        (log/infof "%s thread interrupted." thread-name))))))
 
-(defn uuid
-  "Generates a new uuid."
-  []
-  (UUID/randomUUID))
 
 (defn secure-random-hex
   "generates a secure random hex string of size 2n"
@@ -244,21 +190,8 @@
   [url]
   (-> url java.net.URL. .getHost))
 
-(defn dissoc-in
-  "Dissociates an entry from a nested associative structure returning a new
-  nested structure. keys is a sequence of keys. Any empty maps that result
-  will not be present in the new structure."
-  [m [k & ks :as keys]]
-  (if ks
-    (if-let [nextmap (get m k)]
-      (let [newmap (dissoc-in nextmap ks)]
-        (if (seq newmap)
-          (assoc m k newmap)
-          (dissoc m k)))
-      m)
-    (dissoc m k)))
 
-(defn make-all-keys-optional
+(defn ^:deprecated make-all-keys-optional
   "m is a schema map. Makes all keys optional in the schema map."
   [m]
   (reduce (fn [ans [k v]]
@@ -266,22 +199,14 @@
           {}
           m))
 
-(defn schema-keys
+(defn ^:deprecated schema-keys
   [m]
   (map #(if (s/optional-key? %) (:k %) %) (keys m)))
 
-(defn schema->update-schema
+(defn ^:deprecated schema->update-schema
   "Takes a map schema and makes all keys optional and dissocs the id."
   [m]
   (-> m (dissoc :id) make-all-keys-optional))
-
-(defn as-vector
-  [x]
-  (if (vector? x) x [x]))
-
-(defn as-coll
-  [x]
-  (if (coll? x) x [x]))
 
 
 (defn sleep
@@ -307,39 +232,6 @@
   []
   (-> (java.lang.management.ManagementFactory/getRuntimeMXBean) .getName (str/split  #"@") first))
 
-(defn group-by+
-  "Similar to group by, but allows applying val-fn to each item in the grouped by list of each key.
-   Can also apply val-agg-fn to the result of mapping val-fn. All input fns are 1 arity.
-   If val-fn and val-agg-fn were the identity fn then this behaves the same as group-by."
-  ([key-fn val-fn xs]
-   (group-by+ key-fn val-fn identity xs))
-  ([key-fn val-fn val-agg-fn xs]
-   (reduce (fn [m [k v]]
-             (assoc m k (val-agg-fn (map val-fn v))))
-           {}
-           (group-by key-fn xs))))
-
-(defn intersect-with
-  "Returns a map whose keys exist in boty map-1 and map-2. f is a 2 arity function
-   that is invoked wht the value from map-1 and map-2 respectively for each matching key."
-  [f map-1 map-2]
-  (reduce (fn [m [k v]]
-            (cond-> m
-              (contains? map-2 k) (assoc k (f v (map-2 k)))))
-          {}
-          map-1))
-
-(defn conform-map
-  "select-keys on map with keys from kmap and renamed keys to be from kmap."
-  [map kmap]
-  (-> (select-keys map (keys kmap))
-      (set/rename-keys kmap)))
-
-(defn key=
-  "Returns a predicate that takes a map as an argument.
-   The predicate applies k to the map and does an equality check against v."
-  [k v]
-  (comp (partial = v) k))
 
 (defn install-aviso-schema-prefer-methods!
   "Installs Aviso Exception dispatch prefer-methods. Without this, actual exceptions are lost."
@@ -349,14 +241,6 @@
   (doseq [x [clojure.lang.IRecord clojure.lang.IPersistentMap java.util.Map]]
     (prefer-method io.aviso.exception/exception-dispatch schema.core.AnythingSchema x)))
 
-(defn deep-merge
-  "Deep merge a data structure. Taken from http://stackoverflow.com/questions/17327733/merge-two-complex-data-structures"
-  [a b]
-  (merge-with (fn [x y]
-                (cond (map? y) (deep-merge x y)
-                      (vector? y) (concat x y)
-                      :else y))
-              a b))
 
 (defn bytes->base64-str
   "Takes an array of bytes and returns the base64 encoded string"
@@ -364,67 +248,38 @@
   (String. (Base64/encodeBase64 bb)))
 
 
-(def ^{:doc "Opposite of str/blank?"} not-blank? (complement str/blank?))
+;; use the ones from e85th.commons.ext
+(def ^:deprecated parse-bool ext/parse-bool)
 
-(def elided "~elided~")
+(def ^:deprecated parse-int ext/parse-int)
 
-(defn elide-values
-  "Walks the map eliding the values whose key appears in key-set."
-  [key-set m]
-  (walk/postwalk
-   (fn [x]
-     (let [[k v] (if (vector? x) x [])]
-       (if (and k (contains? key-set k))
-         [k elided]
-         x)))
-   m))
+(def ^:deprecated parse-long ext/parse-long)
 
-(defn elide-paths
-  "paths is a collection of vectors that can be used to
-   navigate a collection. Each path must be a non empty
-   vector otherwise that path is skipped."
-  [coll & paths]
-  (reduce (fn [ans path]
-            (cond-> ans
-              (and (seq path)
-                   (some? (get-in ans path))) (assoc-in path elided)))
-          coll
-          paths))
+(def ^:deprecated parse-float ext/parse-float)
+
+(def ^:deprecated parse-double ext/parse-double)
+
+(def ^:deprecated deep-merge ext/deep-merge)
+(def ^:deprecated not-blank? ext/not-blank?)
+
+(def ^:deprecated elided ext/elided)
+
+(def ^:deprecated elide-values ext/elide-values)
+
+(def ^:deprecated elide-paths ext/elide-paths)
 
 
-(defn- tr-keys
-  "Adapted from clojure.walk/keywordize-keys.
-   Calls tr-key-fn for each map key encountered.
-   Recursively changes all keys to the transformation
-   provided by tr-key-fn."
-  [tr-key-fn m]
-  (let [f (fn [[k v]]
-            (if (or (string? k) (keyword? k))
-              [(tr-key-fn k) v]
-              [k v]))]
-    ;; only apply to maps
-    (walk/postwalk (fn [x]
-                     (if (map? x)
-                       (into {} (map f x)) x))
-                   m)))
+(def ^:deprecated as-vector ext/as-vector)
 
-(defn lisp-case-keyword
-  "Turns :helloHow to :hello-how
-  Namespace is omitted in returned value."
-  [x]
-  (-> x name str/lisp-case keyword))
+(def ^:deprecated as-coll ext/as-coll)
+(def ^:deprecated uuid ext/random-uuid)
 
-(defn camel-case-keyword
-  "Namespace is omitted in returned value."
-  [x]
-  (-> x name str/camel-case keyword))
+(def ^:deprecated dissoc-in dissoc-in)
 
-(defn camel-case-keys
-  "Camel case all keys in map m."
-  [m]
-  (tr-keys camel-case-keyword m))
+(def ^:deprecated group-by+ ext/group-by+)
 
-(defn lisp-case-keys
-  "Lisp case all keys in map m."
-  [m]
-  (tr-keys lisp-case-keyword m))
+(def ^:deprecated intersect-with ext/intersect-with)
+
+(def ^:deprecated conform-map ext/conform-map)
+
+(def ^:deprecated key= ext/key=)
