@@ -1,12 +1,15 @@
 (ns e85th.commons.ext
   "Fns applicable to both jvm and js"
-  (:refer-clojure :exclude [random-uuid])
+  (:refer-clojure :exclude [random-uuid uuid])
   (:require [superstring.core :as str]
             [clojure.walk :as walk]
             [clojure.set :as set])
   #?(:clj (:import [java.util UUID])))
 
 
+;;----------------------------------------------------------------------
+;; Parse data types
+;;----------------------------------------------------------------------
 (defn try-parse
   [f s default]
   (try
@@ -51,49 +54,34 @@
   ([s default]
    (try-parse parse-double s default)))
 
+(defn parse-uuid
+  ([s]
+   #?(:clj (UUID/fromString s)
+      :cljs (cljs.core/uuid s)))
+  ([s default]
+   (try-parse parse-uuid s default)))
+
+;;----------------------------------------------------------------------
+;; Parse data types
+;;----------------------------------------------------------------------
 (def not-blank? "Opposite of str/blank" (complement str/blank?))
 
-(def elided "~elided~")
+(defn unqualify
+  "Unqualifies a keyword or symbol. Given :hello/world => :world.
+   Given 'hello/world returns 'world."
+  [x]
+  (cond
+    (keyword? x) (keyword (name x))
+    (symbol?  x) (symbol  (name x))
+    :else (throw (ex-info (str "Not a symbol or keyword: " x) {:x x :type (type x)}))))
 
-(defn elide-values
-  "Walks the map eliding the values whose key appears in key-set."
-  [key-set m]
-  (walk/postwalk
-   (fn [x]
-     (let [[k v] (if (vector? x) x [])]
-       (if (and k (contains? key-set k))
-         [k elided]
-         x)))
-   m))
+(defn symbol->keyword
+  [sym]
+  (keyword (namespace sym) (name sym)))
 
-(defn elide-paths
-  "paths is a collection of vectors that can be used to
-   navigate a collection. Each path must be a non empty
-   vector otherwise that path is skipped."
-  [coll & paths]
-  (reduce (fn [ans path]
-            (cond-> ans
-              (and (seq path)
-                   (some? (get-in ans path))) (assoc-in path elided)))
-          coll
-          paths))
-
-
-(defn- tr-keys
-  "Adapted from clojure.walk/keywordize-keys.
-   Calls tr-key-fn for each map key encountered.
-   Recursively changes all keys to the transformation
-   provided by tr-key-fn."
-  [tr-key-fn m]
-  (let [f (fn [[k v]]
-            (if (or (string? k) (keyword? k))
-              [(tr-key-fn k) v]
-              [k v]))]
-    ;; only apply to maps
-    (walk/postwalk (fn [x]
-                     (if (map? x)
-                       (into {} (map f x)) x))
-                   m)))
+(defn keyword->symbol
+  [k]
+  (.-sym k))
 
 (defn lisp-case-keyword
   "Turns :helloHow to :hello-how
@@ -106,15 +94,70 @@
   [x]
   (-> x name str/camel-case keyword))
 
+(defn walk
+  "Adapted from clojure.walk/keywordize-keys. Uses `walk/postwalk`
+   and calls `key-fn` on each key and `val-fn` on each value
+   for each map entry.  The 2 arity version invokes `kv-fn`
+   for each map entry. Recursively changes all keys and values
+   as specified by `kv-fn` or `key-fn` and `val-fn`."
+  ([kv-fn m]
+   (walk/postwalk (fn [x]
+                    (if (map? x)
+                      (into (with-meta {} (meta x)) (map kv-fn x))
+                      x))
+                  m))
+  ([key-fn val-fn m]
+   (let [f (fn [[k v]]
+             [(key-fn k) (val-fn v)])]
+     (walk f m))))
+
+(def ^:const elided "~elided~")
+
+(defn elide-vals
+  "Walks the map eliding the values whose key appears in key-set."
+  ([key-set m]
+   (elide-vals elided key-set m))
+  ([elision-value key-set m]
+   (walk (fn [[k v]]
+           (if (contains? key-set k)
+             [k elision-value]
+             [k v]))
+         m)))
+
+(defn elide-paths
+  [elision-value coll & paths]
+  (reduce (fn [ans path]
+            (cond-> ans
+              (and (seq path)
+                   (some? (get-in ans path))) (assoc-in path elision-value)))
+          coll
+          paths))
+
+(defn elide-paths*
+  "paths is a collection of vectors that can be used to
+   navigate a collection. Each path must be a non empty
+   vector otherwise that path is skipped."
+  ([coll & paths]
+   (apply elide-paths elided coll paths)))
+
+(defn- key-xformer
+  "Returns a function which takes in some key `k`
+   and applies `f` to `k` if `k` satisfies `string?`
+   or `keyword?`"
+  [f]
+  (fn [k]
+    (cond-> k
+      (or (string? k) (keyword? k)) f)))
+
 (defn camel-case-keys
   "Camel case all keys in map m."
   [m]
-  (tr-keys camel-case-keyword m))
+  (walk (key-xformer camel-case-keyword) identity m))
 
 (defn lisp-case-keys
   "Lisp case all keys in map m."
   [m]
-  (tr-keys lisp-case-keyword m))
+  (walk (key-xformer lisp-case-keyword) identity m))
 
 
 (defn random-uuid
@@ -123,6 +166,9 @@
   #?(:clj (UUID/randomUUID)
      :cljs (cljs.core/random-uuid)))
 
+;;----------------------------------------------------------------------
+;; Collections
+;;----------------------------------------------------------------------
 (defn as-vector
   [x]
   (if (vector? x) x [x]))
@@ -130,6 +176,81 @@
 (defn as-coll
   [x]
   (if (coll? x) x [x]))
+
+
+(defn map-kv
+  "Apply `f` a two arity function to each
+   map entry in `m`."
+  [f m]
+  (reduce-kv (fn [m k v]
+               (let [[k v] (f k v)]
+                 (assoc m k v)))
+             {}
+             m))
+
+
+(defn map-keys
+  "Applies a function `f` to each key in map `m`.
+   This is shallow, it does not walk `m`."
+  [f m]
+  (reduce-kv (fn [m k v]
+               (assoc m (f k) v))
+             {}
+             m))
+
+(defn map-vals
+  "Applies a function `f` to each value in map `m`.
+   This is shallow, it does not walk `m`."
+  [f m]
+  (reduce-kv (fn [m k v]
+               (assoc m k (f v)))
+             {}
+             m))
+
+(defn filter-kv
+  "Apply `pred` a two arity function to each map entry
+   and include the map entry if `pred` returns truthy."
+  [pred m]
+  (reduce-kv (fn [m k v]
+               (if (pred k v)
+                 (assoc m k v)
+                 m))
+             {}
+             m))
+
+(defn filter-keys
+  "Apply `pred` a one arity function to each map key and
+   include the map entry if `pred` returns truthy."
+  [pred m]
+  (reduce-kv (fn [m k v]
+               (if (pred k)
+                 (assoc m k v)
+                 m))
+             {}
+             m))
+
+(defn filter-vals
+  "Apply `pred` a one arity function to each map val and
+   include the map entry if `pred` returns truthy."
+  [pred m]
+  (reduce-kv (fn [m k v]
+               (if (pred v)
+                 (assoc m k v)
+                 m))
+             {}
+             m))
+
+(defn remove-kv
+  [pred m]
+  (filter-kv (complement pred) m))
+
+(defn remove-keys
+  [pred m]
+  (filter-keys (complement pred) m))
+
+(defn remove-vals
+  [pred m]
+  (filter-vals (complement pred) m))
 
 (defn dissoc-in
   "Dissociates an entry from a nested associative structure returning a new
@@ -212,11 +333,11 @@
               a b))
 
 (defn prune-map
-  "Prunes the map according to `pred?`"
+  "Prunes the map according to `pred`"
   ([m]
    (prune-map m (fn [[k v]]
                   (or (nil? v)
                       (and (string? v)
                            (str/blank? v))))))
-  ([m pred?]
-   (into {} (remove pred? m))))
+  ([m pred]
+   (into {} (remove pred m))))

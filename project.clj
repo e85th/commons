@@ -1,9 +1,9 @@
-(defproject e85th/commons "0.1.27"
+(defproject e85th/commons "0.1.28"
   :description "Various infrastructure and utilities to bootstrap an application/server."
   :url "http://github.com/e85th/commons"
   :license {:name "Apache License 2.0"
             :url "http://www.apache.org/licenses/LICENSE-2.0"}
-  :dependencies [[org.clojure/clojure "1.9.0-beta2" :scope "provided"]
+  :dependencies [[org.clojure/clojure "1.9.0-beta3" :scope "provided"]
                  [superstring "2.1.0"]
                  [org.clojure/java.jdbc "0.7.3"]
                  [hikari-cp "1.8.1"] ; db connection pool
@@ -33,7 +33,7 @@
                  [clj-time "0.14.0"]
                  [org.clojure/data.csv "0.1.4"]
 
-                 [com.googlecode.libphonenumber/libphonenumber "8.8.3"]
+                 [com.googlecode.libphonenumber/libphonenumber "8.8.4"]
 
                  ;; -- Email
                  [com.draines/postal "2.0.2"]
@@ -61,7 +61,7 @@
              :profiles/test {}
              :project/dev   {:dependencies [[reloaded.repl "0.2.3"]
                                             [orchestra "2017.08.13"]
-                                            [expectations "2.2.0-rc1"]
+                                            [expectations "2.2.0-rc3"]
                                             [org.clojure/tools.namespace "0.2.11"]
                                             [org.clojure/tools.nrepl "0.2.13"]]
                              :source-paths   ["dev/src"]
