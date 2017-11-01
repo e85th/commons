@@ -264,9 +264,9 @@
 
 (def ^:deprecated elided ext/elided)
 
-(def ^:deprecated elide-values ext/elide-values)
+(def ^:deprecated elide-values ext/elide-vals)
 
-(def ^:deprecated elide-paths ext/elide-paths)
+(def ^:deprecated elide-paths ext/elide-paths*)
 
 
 (def ^:deprecated as-vector ext/as-vector)
