@@ -1,6 +1,5 @@
 (ns e85th.commons.ex
-  (:require [schema.core :as s]
-            [e85th.commons.util :as u]
+  (:require [e85th.commons.util :as u]
             [clojure.string :as str])
   (:import [e85th.commons.exceptions ValidationExceptionInfo AuthExceptionInfo ForbiddenExceptionInfo]))
 
@@ -9,16 +8,17 @@
 (def not-found ::not-found)
 
 
-(s/defn generic
+;; kind - keyword, msg str
+(defn generic
   "Creates and returns a new generic exception."
-  ([kind :- s/Keyword]
+  ([kind]
    (generic kind (str kind)))
-  ([kind :- s/Keyword msg :- s/Str]
+  ([kind msg]
    (generic kind msg {}))
-  ([kind :- s/Keyword msg :- (s/maybe s/Str) data-map]
+  ([kind msg data-map]
    (ex-info msg (merge data-map {ex-type kind ex-msg msg}))))
 
-(s/defn validation
+(defn validation
   "kind becomes the error code in keyword form."
   ([kind]
    (validation kind (str kind)))
@@ -26,14 +26,14 @@
    (validation kind msg {}))
   ([kind msg data-map]
    (validation kind msg data-map nil))
-  ([kind :- s/Keyword msg :- s/Str data-map cause]
+  ([kind msg data-map cause]
    (ValidationExceptionInfo. msg (merge data-map {ex-type kind ex-msg msg}) cause)))
 
 (defn validation?
   [x]
   (instance? ValidationExceptionInfo x))
 
-(s/defn auth
+(defn auth
   "No single arity which just takes msg-or-msgs because there should be specificity
    which can be used for UIs to display more user friendly message potentially. kind becomes the
    error code in keyword form."
@@ -43,14 +43,14 @@
    (auth kind msg {}))
   ([kind msg data-map]
    (auth kind msg data-map nil))
-  ([kind :- s/Keyword msg :- s/Str data-map cause]
+  ([kind msg data-map cause]
    (AuthExceptionInfo. msg (merge data-map {ex-type kind ex-msg msg}) cause)))
 
 (defn auth?
   [x]
   (instance? AuthExceptionInfo x))
 
-(s/defn forbidden
+(defn forbidden
   "No single arity which just takes msg-or-msgs because there should be specificity
    which can be used for UIs to display more user friendly message potentially. kind becomes the
    error code in keyword form."
@@ -60,7 +60,7 @@
    (forbidden kind msg {}))
   ([kind msg data-map]
    (forbidden kind msg data-map nil))
-  ([kind :- s/Keyword msg :- s/Str data-map cause]
+  ([kind msg data-map cause]
    (ForbiddenExceptionInfo. msg (merge data-map {ex-type kind ex-msg msg}) cause)))
 
 (defn forbidden?
