@@ -17,9 +17,6 @@
                  ;; -- Logging
                  [com.taoensso/timbre "4.10.0"]
 
-                 ;; -- contracts
-                 [prismatic/schema "1.1.6"]
-
                  ;; -- async http requests
                  [http-kit "2.2.0"]
 

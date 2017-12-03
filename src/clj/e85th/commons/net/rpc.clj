@@ -3,9 +3,9 @@
   (:require [org.httpkit.client :as http]
             [cheshire.core :as json]
             [clojure.core.match :refer [match]]
-            [schema.core :as s]
+            [clojure.spec.alpha :as s]
             [taoensso.timbre :as log]
-            [clojure.string :as string]
+            [clojure.string :as str]
             [clojure.edn :as edn]))
 
 (def http-success-status-codes #{200 201 202 203 204})
@@ -15,12 +15,13 @@
   [status-code]
   (http-success-status-codes status-code))
 
-(s/defn content-type->name :- s/Keyword
-  [s :- (s/maybe s/Str)]
-  (let [s (string/lower-case (or s ""))]
+(defn content-type->name
+  "Returns a keyword ie :json, :edn or :other. NB input ``s can be `nil`."
+  [s]
+  (let [s (str/lower-case (or s ""))]
     (cond
-      (string/includes? s "application/json") :json
-      (string/includes? s "application/edn")  :edn
+      (str/includes? s "application/json") :json
+      (str/includes? s "application/edn")  :edn
       :else :other)))
 
 (defn json?
@@ -62,35 +63,45 @@
 (def ^{:doc "Checks for a successful response and parses the response body to a clojure data structure"}
   parse-successful-response (comp parse-response-body check-successful-response))
 
-(s/defn call!
+
+;;----------------------------------------------------------------------
+(s/fdef call!
+        :args (s/or :all (s/cat :method keyword? :url string? :http-opts map? :cb (s/? fn?))
+                    :req (s/cat :req map? :cb (s/? fn?))))
+(defn call!
   "Returns a promise if no callback is passed in.
    Derefing the promise will yield the http response.
-   http-opts is a map of options used by http-kit."
-  ([method :- s/Keyword url :- s/Str http-opts]
+   http-opts is a map of options used by http-kit.
+   method is a keyword"
+  ([method url http-opts]
    (call! (assoc http-opts :method method :url url)))
+  ([method url http-opts cb]
+   (call! (assoc http-opts :method method :url url) cb))
   ([req]
    (http/request req))
-  ([method :- s/Keyword url :- s/Str http-opts cb]
-   (call! (assoc http-opts :method method :url url) cb))
   ([req cb]
    (http/request req cb)))
 
-(s/defn sync-call!
+;;----------------------------------------------------------------------
+(s/fdef sync-call!
+        :args (s/or :all (s/cat :method keyword? :url string? :http-opts map?)
+                    :req (s/cat :req map?)))
+(defn sync-call!
   "Makes a blocking http call.  Returns the parsed response body as a clojure
    data structure. http-opts is a map of options used by http-kit."
-  ([method :- s/Keyword url :- s/Str http-opts]
+  ([method url http-opts]
    (-> @(call! method url http-opts)
        parse-successful-response))
   ([req]
    (-> req call! deref parse-successful-response)))
 
 
-(s/defn new-request
+(defn new-request
   [method url]
   {:method method
    :url url})
 
-(s/defn json-content
+(defn json-content
   "Adds in content-type and json encodes the body."
   ([req]
    (json-content req nil))
@@ -99,11 +110,11 @@
      true (update-in [:headers] merge {"Content-Type" "application/json" "Accept" "application/json"})
      body (assoc-in [:body] (json/generate-string body)))))
 
-(s/defn bearer-auth
+(defn bearer-auth
   "Add a bearer authorization in to the request headers"
   [req token]
   (assoc-in req [:headers "Authorization"] (str "Bearer " token)))
 
-(s/defn query-params
+(defn query-params
   [req params-map]
   (update-in req [:query-params] merge params-map))

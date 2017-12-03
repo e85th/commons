@@ -2,15 +2,23 @@
   (:require [clj-time.core :as t]
             [clj-time.periodic :as p]
             [clj-time.format :as fmt]
-            [schema.core :as s]
-            [clojure.string :as string])
+            [clojure.spec.alpha :as s]
+            [clojure.string :as str])
   (:import [org.joda.time DateTime DateTimeZone]
            [clojure.lang IFn]))
 
 
-(s/defn add :- DateTime
+(defn date-time?
+  [x]
+  (instance? DateTime x))
+
+(s/fdef add
+        :args (s/cat :unit-fn fn? :n int? :date date-time?)
+        :ret date-time?)
+
+(defn add
   "Adds "
-  [unit-fn :- IFn n :- s/Int date :- DateTime]
+  [unit-fn n date]
   (t/plus date (unit-fn n)))
 
 (def add-days (partial add t/days))
@@ -64,14 +72,14 @@
          reducer (fn [ans [qty unit]]
                    (conj ans (str qty " " unit)))]
      (if (seq t-comps)
-       (string/join ", " (reduce reducer [] (map vector t-comps units)))
+       (str/join ", " (reduce reducer [] (map vector t-comps units)))
        "0 ms"))))
 
-(s/defn with-zone-retain-fields
+(defn with-zone-retain-fields
   "Gets the equivalent UTC DateTime if the timezone were changed to timezone.
    Use to turn 2017-12-11T18:00:00Z and you want to
-   UTC equivalent "
-  [date :- DateTime timezone :- DateTimeZone]
+   UTC equivalent. `date` is DateTime and `timezone` is DateTimeZone."
+  [date timezone]
   (.withZoneRetainFields date timezone))
 
 (def ^{:doc "Answers with a seq of the constitutents of the date time. [year month day  hour minute second ms]"}

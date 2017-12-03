@@ -1,7 +1,6 @@
 (ns e85th.commons.util-test
   (:require [expectations.clojure.test :refer [defexpect]]
             [expectations :refer :all]
-            [schema.core :as s]
             [e85th.commons.util :as u]))
 
 (defexpect normalize-env-test
@@ -27,7 +26,3 @@
   (expect true (u/known-env? :development))
   (expect true (u/known-env? :production))
   (expect true (u/known-env? :staging)))
-
-(defexpect schema-keys-test
-  (expect [:a :b :c] (u/schema-keys {:a s/Str :b s/Str :c s/Str}))
-  (expect [:a :b :c] (u/schema-keys {(s/optional-key :a) s/Str :b s/Str :c s/Str})))

@@ -1,7 +1,7 @@
 (ns e85th.commons.tel
   "Telephone related functions"
   (:refer-clojure :exclude [format])
-  (:require [schema.core :as s])
+  (:require [clojure.spec.alpha :as s])
   (:import [com.google.i18n.phonenumbers PhoneNumberUtil PhoneNumberUtil$PhoneNumberFormat PhoneNumberUtil$MatchType Phonenumber$PhoneNumber]
            [e85th.commons.exceptions PhoneNumberException]))
 
@@ -18,11 +18,20 @@
 (def ^{:private true}
   national-format PhoneNumberUtil$PhoneNumberFormat/NATIONAL)
 
-(s/defn str->phone-number :- (s/maybe Phonenumber$PhoneNumber)
+
+(defn phone-number?
+  [x]
+  (instance? Phonenumber$PhoneNumber x))
+
+(s/fdef str->phone-number
+        :args (s/cat :nbr string? :iso-country-code (s/? string?))
+        :ret (s/nilable phone-number?))
+
+(defn str->phone-number
   "Parse a *valid* phone number otherwise returns nil"
-  ([nbr :- s/Str]
+  ([nbr]
    (str->phone-number nbr default-country-code))
-  ([nbr :- s/Str iso-country-code :- s/Str]
+  ([nbr iso-country-code]
    (try
      (.parse ^PhoneNumberUtil phone-nbr-util nbr iso-country-code)
      (catch Exception ex

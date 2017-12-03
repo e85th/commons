@@ -1,13 +1,15 @@
 (ns e85th.commons.sms
   (:refer-clojure :exclude [send])
-  (:require [schema.core :as s]
+  (:require [clojure.spec.alpha :as s]
             [com.stuartsierra.component :as component]))
 
 
-(s/defschema Message
-  {(s/optional-key :from-nbr) s/Str
-   :to-nbr s/Str
-   :body s/Str})
+(s/def ::to-nbr   string?)
+(s/def ::from-nbr string?)
+(s/def ::body     string?)
+
+(s/def ::message (s/keys :req-un [::to-nbr ::body]
+                         :opt-un [::from-nbr]))
 
 (defprotocol ISmsSender
   (send [this msg]))

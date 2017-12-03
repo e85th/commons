@@ -1,12 +1,12 @@
 (ns e85th.commons.sql
   (:require [taoensso.timbre :as log]
-            [clojure.string :as string]
+            [clojure.string :as str]
             [clojure.java.jdbc :as jdbc]
             [clj-time.core :as t]
             [clj-time.coerce :as coerce]
             [hikari-cp.core :as hikari]
             [com.stuartsierra.component :as component]
-            [schema.core :as s])
+            [clojure.spec.alpha :as s])
   (:import [org.joda.time DateTime]
            [java.sql PreparedStatement SQLException]
            [e85th.commons.exceptions NoRowsUpdatedException]))
@@ -55,7 +55,7 @@
   (set-parameter [v ^PreparedStatement stmt idx]
     (.setTimestamp stmt idx (coerce/to-sql-time v))))
 
-(s/defn query
+(defn query
   "Returns a seq of maps representing the result set.
   (sql/query (:db system) [\"select * from typeform.evideen_signup where id = ?\" 12]"
   [db sql-and-params]
@@ -83,27 +83,40 @@
       (assoc-insert-audits user-id)
       (assoc-update-audits user-id)))
 
-(s/defn insert!
+;;----------------------------------------------------------------------
+(s/fdef insert!
+        :args (s/cat :db any? :table keyword :row map? :user-id (s/? nat-int?)))
+
+(defn insert!
   "Returns the inserted row as a map. When user-id is specified,
    created-by and updated-by fields will be assocd into the row."
-  ([db table :- s/Keyword row]
+  ([db table row]
    (let [data (jdbc/insert! db table row {:entities as-sql-identifier})
          data (if (map? data) data (first data))]
      (clojurize-returned-row data)))
-  ([db table :- s/Keyword row user-id :- s/Int]
+  ([db table row user-id]
    (insert! db table (assoc-audits user-id row))))
 
-(s/defn insert-with-create-audits!
+;;----------------------------------------------------------------------
+(s/fdef insert-with-create-audits!
+        :args (s/cat :db any? :table keyword :row map? :user-id nat-int?))
+
+(defn insert-with-create-audits!
   "Adds in keys :created-by to the row and calls insert!"
-  [db table :- s/Keyword row user-id :- s/Int]
+  [db table row user-id]
   (insert! db table (assoc-insert-audits user-id row)))
 
-(s/defn insert-multi!
+
+;;----------------------------------------------------------------------
+(s/fdef insert-multi!
+        :args (s/cat :db any? :table keyword :rows (s/coll-of map?) :batch-size (s/? nat-int?)))
+
+(defn insert-multi!
   "Batch inserts"
-  ([db table :- s/Keyword rows]
+  ([db table rows]
    (insert-multi! db table rows default-batch-size))
 
-  ([db table :- s/Keyword rows batch-size :- s/Int]
+  ([db table rows batch-size]
    (when (seq rows)
      (let [table (-> table name as-sql-identifier)
            col-names (->> rows first keys (map (comp as-sql-identifier name)))
@@ -117,59 +130,82 @@
   (let [rows (map assoc-audit-fields-fn rows)]
     (insert-multi! db table rows batch-size)))
 
-(s/defn insert-multi-with-audits!
+;;----------------------------------------------------------------------
+(s/fdef insert-multi-with-audits!
+        :args (s/cat :db any? :table keyword :rows (s/coll-of map?) :user-id nat-int? :batch-size (s/? nat-int?)))
+
+(defn insert-multi-with-audits!
   "Batch insert with audits."
-  ([db table :- s/Keyword rows user-id :- s/Int]
+  ([db table rows user-id]
    (insert-multi-with-audits! db table rows user-id default-batch-size))
-  ([db table :- s/Keyword rows user-id :- s/Int batch-size :- s/Int]
+  ([db table rows user-id batch-size]
    (insert-multi-with-audits* db table rows (partial assoc-audits user-id) default-batch-size)))
 
-(s/defn insert-multi-with-create-audits!
+;;----------------------------------------------------------------------
+(s/fdef insert-multi-with-create-audits!
+        :args (s/cat :db any? :table keyword :rows (s/coll-of map?) :user-id nat-int? :batch-size (s/? nat-int?)))
+
+(defn insert-multi-with-create-audits!
   "Batch insert with create audits."
-  ([db table :- s/Keyword rows user-id :- s/Int]
+  ([db table rows user-id]
    (insert-multi-with-create-audits! db table rows user-id default-batch-size))
-  ([db table :- s/Keyword rows user-id :- s/Int batch-size :- s/Int]
+  ([db table rows user-id batch-size]
    (insert-multi-with-audits* db table rows (partial assoc-insert-audits user-id) default-batch-size)))
 
-(s/defn delete!
+;;----------------------------------------------------------------------
+(s/fdef delete!
+        :args (s/cat :db any? :table keyword :where-clause vector?))
+
+(defn delete!
   "Delete. (sql/delete! (:db system) :schema.table-name [\"id = ?\" 42])"
-  [db table :- s/Keyword where-clause]
+  [db table where-clause]
   (jdbc/delete! db table where-clause {:entities as-sql-identifier}))
 
-(s/defn ^:private update* :- s/Int
-  ([db table :- s/Keyword row :- {s/Keyword s/Any} where-clause]
-   (update* db table row where-clause true))
-  ([db table :- s/Keyword row :- {s/Keyword s/Any} where-clause optimistic? :- s/Bool]
-   (let [n (first (jdbc/update! db table row where-clause {:entities as-sql-identifier}))]
+;;----------------------------------------------------------------------
+(s/fdef update*
+        :args (s/cat :db any? :table keyword :row map? :where-clause vector? :optimistic? (s/? boolean?))
+        :ret int?)
 
+(defn- update*
+  ([db table row where-clause]
+   (update* db table row where-clause true))
+  ([db table row where-clause optimistic?]
+   (let [n (first (jdbc/update! db table row where-clause {:entities as-sql-identifier}))]
      (when (and optimistic? (zero? n))
        (throw (NoRowsUpdatedException.)))
-
      n)))
 
-(s/defn update! :- s/Int
+;;----------------------------------------------------------------------
+(s/fdef update
+        :args (s/cat :db any? :table keyword :row map? :where-clause vector? :user-id (s/? nat-int?) :optimistic? (s/? boolean?))
+        :ret int?)
+
+(defn update!
   "Returns count of rows updated.
-  (sql/update! (:db system) :schema.table-name {:first-name \"Mary\"} [\"id = ?\" 42])
-  "
-  ([db table :- s/Keyword row :- {s/Keyword s/Any} where-clause]
+  (sql/update! (:db system) :schema.table-name {:first-name \"Mary\"} [\"id = ?\" 42])"
+  ([db table row where-clause]
    (update* db table row where-clause))
-  ([db table :- s/Keyword row where-clause user-id :- s/Int]
+  ([db table row where-clause user-id]
    (update! db table row where-clause user-id true))
-  ([db table :- s/Keyword row where-clause user-id :- s/Int optimistic? :- s/Bool]
+  ([db table row where-clause user-id optimistic?]
    (update* db table (assoc-update-audits user-id row) where-clause optimistic?)))
 
-(s/defn unique-violation? :- s/Bool
+(defn unique-violation?
   "Postgres unique violation for the exception? https://www.postgresql.org/docs/current/static/errcodes-appendix.html"
-  [ex :- SQLException]
+  [^SQLException ex]
   (= "23505" (.getSQLState ex)))
 
 
-(s/defn truncate-table!
-  [db tbl :- s/Keyword]
-  (jdbc/execute! db [(str "truncate table " (as-sql-identifier  (name tbl)))]))
+;;----------------------------------------------------------------------
+(s/fdef truncate-table!
+        :args (s/cat :db any? :table keyword))
+
+(defn truncate-table!
+  [db table]
+  (jdbc/execute! db [(str "truncate table " (as-sql-identifier  (name table)))]))
 
 
-(s/defn execute-wo-txn!
+(defn execute-wo-txn!
   "Executes statement outside of any implicit transactions.
    Useful in executing vacuum for example."
   [db sql]

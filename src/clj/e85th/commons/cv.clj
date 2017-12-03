@@ -1,7 +1,6 @@
 (ns e85th.commons.cv
   "Computer Vision"
-  (:require [schema.core :as s]
-            [com.stuartsierra.component :as component]))
+  (:require [com.stuartsierra.component :as component]))
 
 
 (defprotocol IOcr

@@ -2,7 +2,7 @@
   "Various tokens and token factories."
   (:require [com.stuartsierra.component :as component]
             [clj-time.core :as t]
-            [schema.core :as s]
+            [clojure.spec.alpha :as s]
             [buddy.sign.jwt :as jwt]
             [buddy.core.hash :as hash]
             [buddy.auth.backends.token :as token-backend]
@@ -12,17 +12,17 @@
 
 (def token-decrypt-failed-ex ::token-decrypt-failed-ex)
 
-(s/defn rand-token :- s/Str
+(defn rand-token
   "Generates a random token of size n (default 5)."
   ([]
    (rand-token 5))
   ([n]
    (rand-token n "0123456789"))
-  ([n src :- s/Str]
+  ([n src]
    (assert (pos? n))
    (apply str (repeatedly n #(rand-nth src)))))
 
-(s/defn log-auth-error
+(defn log-auth-error
   [request ex]
   (log/infof "auth error ex: %s" ex))
 
@@ -53,14 +53,6 @@
     (jwt/encrypt (assoc data :exp (t/plus (t/now) (t/minutes token-ttl-minutes)))
                  secret
                  (:opts this)))
-
-  #_(token->data [this token]
-    (ss/try+
-     (dissoc (jwt/decrypt token secret) :exp)
-     (catch [:type :validation] ex
-       (log/infof "Token decrypt failed: %s" ex))
-     (catch Exception ex
-       (log/warnf ex))))
   (token->data [this token]
     (try
      (dissoc (jwt/decrypt token secret) :exp)
@@ -76,12 +68,16 @@
   (backend [this]
     (:backend this)))
 
-(s/defn new-sha256-token-factory
+
+(s/fdef new-sha256-token-factory
+        :args (s/cat :secret string? :token-ttl-minutes nat-int? :token-name (s/? string?) :on-error-fn (s/? fn?)))
+
+(defn new-sha256-token-factory
   "Create a new token factory with SHA256 implementation."
-  ([secret :- s/Str token-ttl-minutes :- s/Int]
+  ([secret token-ttl-minutes]
    (new-sha256-token-factory secret token-ttl-minutes "Bearer"))
-  ([secret :- s/Str token-ttl-minutes :- s/Int token-name :- s/Str]
+  ([secret token-ttl-minutes token-name]
    (new-sha256-token-factory secret token-ttl-minutes token-name log-auth-error))
-  ([secret :- s/Str token-ttl-minutes :- s/Int token-name :- s/Str on-error-fn :- IFn]
+  ([secret token-ttl-minutes token-name on-error-fn]
    (map->Sha256TokenFactory {:secret secret :token-ttl-minutes token-ttl-minutes
                              :token-name token-name :on-error-fn on-error-fn})))

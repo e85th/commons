@@ -1,6 +1,6 @@
 (ns e85th.commons.data.csv
   (:require [clojure.data.csv :as csv]
-            [clojure.string :as string])
+            [clojure.string :as str])
   (:import [java.io StringWriter]))
 
 
@@ -21,5 +21,5 @@
 
 (comment
   (def sw (StringWriter.))
-  (map (comp string/trim (partial row->csv sw {})) [ ["a" "b" "1" "2"] ["omg" "how" "are"]] )
+  (map (comp str/trim (partial row->csv sw {})) [ ["a" "b" "1" "2"] ["omg" "how" "are"]] )
   )

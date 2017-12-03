@@ -1,5 +1,5 @@
 (ns e85th.commons.fs
-  (:require [schema.core :as s]
+  (:require [clojure.spec.alpha :as s]
             [me.raynes.fs :as fs]
             [me.raynes.fs.compression :as compression])
   (:import [java.io File]
@@ -25,19 +25,15 @@
   (path [this] this))
 
 
-(s/defn directory? :- s/Bool
-  [path :- Path & link-opts]
+(defn directory?
+  "path is an instance of java.nio.file.Path"
+  [path & link-opts]
   (Files/isDirectory path (into-array LinkOption link-opts)))
 
 
-(def ^{:doc "Overwrite file option"}
-  overwrite ::overwrite)
-
-(def ^{:doc "Atomic Move file option"}
-  atomic-move ::atomic-move)
-
-(def ^{:doc "Copy file attrs"}
-  copy-attrs ::copy-attrs)
+(def overwrite   "Overwrite file option"   ::overwrite)
+(def atomic-move "Atomic Move file option" ::atomic-move)
+(def copy-attrs  "Copy file attrs"         ::copy-attrs)
 
 (def ^:private
   opt->copy-option
@@ -45,22 +41,28 @@
    atomic-move StandardCopyOption/ATOMIC_MOVE
    copy-attrs StandardCopyOption/COPY_ATTRIBUTES})
 
-(s/defn move
+(defn move
   "copy-opts are fs/overwrite"
   [src dest & copy-opts]
   (Files/move (path src) (path dest) (into-array CopyOption (map opt->copy-option copy-opts))))
 
 
-(def ^{:doc "One arg takes a file name or File objects."}
-  empty-file? (comp zero? fs/size))
-(def ^{:doc "complement of empty-file?"}
-  non-empty-file? (complement empty-file?))
+(def empty-file?
+  "One arg takes a file name or File objects."
+  (comp zero? fs/size))
+
+(def non-empty-file?
+  "complement of empty-file?"
+  (complement empty-file?))
 
 
-(s/defn bunzip2-and-untar
-  ([src :- s/Str dest :- s/Str]
+(s/fdef bunzip2-and-untar
+        :args (s/cat :src string? :dest string? :delete-src? (s/? boolean?)))
+
+(defn bunzip2-and-untar
+  ([src dest]
    (bunzip2-and-untar src dest true))
-  ([src :- s/Str dest :- s/Str delete-src?]
+  ([src dest delete-src?]
    (let [tmp-file (fs/temp-name src)]
      (compression/bunzip2 src tmp-file)
      (compression/untar tmp-file dest)

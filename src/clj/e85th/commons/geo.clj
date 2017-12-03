@@ -1,7 +1,7 @@
 (ns e85th.commons.geo
-  (:require [schema.core :as s]
+  (:require [clojure.spec.alpha :as s]
             [com.stuartsierra.component :as component]
-            [clojure.string :as string])
+            [clojure.string :as str])
   (:import [e85th.commons.exceptions GeocodingException]))
 
 (defprotocol IPoint
@@ -22,24 +22,6 @@
   (lat [this] lat)
   (lng [this] lng))
 
-(s/defschema Geocode
-  {:lat s/Num
-   :lng s/Num
-   :place-id s/Str
-   :location-type s/Str})
-
-(s/defschema PlaceSearch
-  {:lat s/Num
-   :lng s/Num
-   :name s/Str
-   ;; radius in meters
-   (s/optional-key :radius) s/Num})
-
-(s/defschema Place
-  {:lat s/Num
-   :lng s/Num
-   :place-id s/Str})
-
 (defprotocol IGeocoder
   "Geocoding"
   (geocode [this address] "Geocode an address otherwise throws GeocodingException.")
@@ -57,7 +39,7 @@
   (place-search [this search-params]
     place))
 
-(s/defn new-nil-geocoder
+(defn new-nil-geocoder
   "Creates a new geocoder that returns the same values. Does not make network calls."
   ([]
    (let [geocode {:lat 40.7128 :lng 74.0059 :place-id "12345" :location-type "Approximate"}
@@ -66,24 +48,24 @@
   ([geocode place]
    (map->NilGeocoder {:geocode geocode :place place})))
 
-(s/defn compose-address
+(defn compose-address
   "Takes components of an address and filters out non-blanks and constructs
    a ', ' separated string."
   [street city state zip]
   (->> [street city state zip]
-       (remove string/blank?)
+       (remove str/blank?)
        (interpose ", " )
        (apply str)))
 
-(s/defn new-lat-lng :- LatLng
+(defn new-lat-lng
   "Creates a new LatLng"
-  [lat :- s/Num lng :- s/Num]
+  [lat lng]
   (map->LatLng {:lat lat :lng lng}))
 
 (def earth-radius-miles 3959)
 (def earth-radius-km 6372.8)
 
-(s/defn haversine :- s/Num
+(defn haversine
   "Taken from rosettacode.org"
   [earth-radius {lon1 :lng lat1 :lat} {lon2 :lng lat2 :lat}]
   (let [dlat (Math/toRadians (- lat2 lat1))

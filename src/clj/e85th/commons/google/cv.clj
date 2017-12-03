@@ -1,6 +1,5 @@
 (ns e85th.commons.google.cv
-  (:require [schema.core :as s]
-            [e85th.commons.cv :as cv]
+  (:require [e85th.commons.cv :as cv]
             [org.httpkit.client :as http]
             [e85th.commons.net.rpc :as rpc]
             [e85th.commons.util :as u]
@@ -8,17 +7,17 @@
 
 (def v1-url "https://vision.googleapis.com/v1/images:annotate")
 
-(s/defn image-url->base64-str
-  "Does an http :get on the url"
-  [image-url :- s/Str]
+(defn image-url->base64-str
+  "Does an http :get on the url which should be a string."
+  [image-url]
   (-> (rpc/sync-call! :get image-url {})
       .bytes
       u/bytes->base64-str))
 
-(s/defn image-url->text* :- s/Str
+(defn image-url->text*
   "Takes an image-url, fetches the image, base64 encodes it and sends to google for
    OCR purposes.  Returns the text google was able to read."
-  [api-key :- s/Str img-url :- s/Str  max-results :- s/Int]
+  [api-key img-url max-results]
   (let [img (image-url->base64-str img-url)
         body {:requests [{:image {:content img}
                           :features [{:type "TEXT_DETECTION" :maxResults max-results}]}]}]
@@ -43,8 +42,8 @@
     (image-url->text* api-key img-url max-results)))
 
 
-(s/defn new-google-v1-ocr
+(defn new-google-v1-ocr
   "Returns a google v1 cloud vision ocr client.  The images must be available via http get when
   calling methods on this implementation."
-  [api-key :- s/Str]
+  [api-key]
   (map->GoogleCloudVisionV1Ocr {:api-key api-key}))

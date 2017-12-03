@@ -1,17 +1,16 @@
 (ns e85th.commons.google.geo
-  (:require [schema.core :as s]
-            [org.httpkit.client :as http]
+  (:require [org.httpkit.client :as http]
             [e85th.commons.geo :as geo]
             [com.stuartsierra.component :as component]
             [cheshire.core :as json]
-            [clojure.string :as string])
+            [clojure.string :as str])
   (:import [e85th.commons.exceptions GeocodingException]))
 
 
 (def geocode-url "https://maps.googleapis.com/maps/api/geocode/json")
 (def places-url "https://maps.googleapis.com/maps/api/place/nearbysearch/json")
 
-(s/defn ^:private parse-geocode :- geo/Geocode
+(defn- parse-geocode
   [{:keys [status] :as geocode-result}]
   (if (= "OK" status)
     (-> geocode-result
@@ -20,15 +19,17 @@
         (assoc :place-id (get-in geocode-result [:results 0 :place_id])))
     (throw (GeocodingException. status))))
 
-(s/defn ^:private address->geocode :- geo/Geocode
-  [api-key :- s/Str address :- s/Str]
+(defn- address->geocode
+  "api-key and address are strings. Returns a map with keys :lat :lng :place-id and :location-type"
+  [api-key address]
   (let [opts {:query-params {:address address :region "us" :key api-key}}
         {:keys [status body] :as resp} @(http/get geocode-url opts)]
     (when-not (= 200 status)
       (throw (ex-info "Geocoding error. Server did not return 200." resp)))
     (parse-geocode (json/parse-string body true))))
 
-(s/defn ^:private parse-place :- geo/Place
+(defn- parse-place
+  "Returns a map of :lat :lng and a :place-id as a String."
   [{:keys [status] :as geocode-result}]
   (if (= "OK" status)
     (-> geocode-result
@@ -36,9 +37,10 @@
         (assoc :place-id (get-in geocode-result [:results 0 :place_id])))
     (throw (GeocodingException. status))))
 
-(s/defn ^:private search-for-place :- geo/Place
-  "Google place search with radius defaulted to 500 meters"
-  [api-key :- s/Str {:keys [lat lng] :as args} :- geo/PlaceSearch]
+(defn- search-for-place
+  "Google place search with radius defaulted to 500 meters. api-key is a string,
+   and the args is a map of :lat :lng, :name and optionally :radius in meters"
+  [api-key {:keys [lat lng] :as args}]
   (let [params (-> (merge {:radius 500} args)
                    (select-keys [:radius :name])
                    (assoc :location (format "%s,%s" lat lng) :key api-key))
@@ -59,6 +61,6 @@
   (place-search [this search-params]
     (search-for-place api-key search-params)))
 
-(s/defn new-geocoder
-  [api-key :- s/Str]
+(defn new-geocoder
+  [api-key]
   (map->GoogleGeocoder {:api-key api-key}))

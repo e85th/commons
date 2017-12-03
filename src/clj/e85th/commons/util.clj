@@ -1,7 +1,5 @@
 (ns e85th.commons.util
-  (:require [schema.core :as s]
-            [schema.coerce :as schema-coerce]
-            [clojure.java.io :as io]
+  (:require [clojure.java.io :as io]
             [clj-time.coerce :as time-coerce]
             [taoensso.timbre :as log]
             [taoensso.timbre.appenders.core :as appenders]
@@ -33,22 +31,24 @@
      (log/error t uuid))))
 
 
-(s/defn production?
+(defn production?
   [env-name]
   (-> env-name str/lower-case keyword (= :production)))
 
 (def development? (complement production?))
 
-(s/defn normalize-env :- (s/maybe s/Keyword)
-  [env :- s/Str]
+(defn normalize-env
+  "env is a string and returns a nilable keyword."
+  [env]
   (reduce (fn [_ [known-env env-aliases]]
             (when (env-aliases env)
               (reduced known-env)))
           nil
           environment-info))
 
-(s/defn known-env?
-  [env :- (s/maybe s/Keyword)]
+(defn known-env?
+  "env is a nilable keyword"
+  [env]
   (some? (environment-info env)))
 
 (defn known-envs
@@ -85,10 +85,10 @@
             (format "Expected version line to start with version= but is %s" line))
     (second (str/split line #"="))))
 
-(s/defn log-file-with-suffix
+(defn log-file-with-suffix
   "log-file is a string that ends in .log.  Adds the suffix before the
    .log if there is a suffix."
-  [log-file :- s/Str suffix :- (s/maybe s/Str)]
+  [log-file suffix]
   (cond-> log-file
     (seq suffix) (str/replace #".log$" (str "-" suffix ".log"))))
 
@@ -137,15 +137,6 @@
       (throw (Exception. (str "No suitable DateTime coercion for: " (class x)))))
     (f x)))
 
-(def schema-string-coercions
-  (merge schema-coerce/+string-coercions+ {DateTime coerce-to-date-time s/Keyword keyword}))
-
-(defn schema-string-coercion-matcher
-  "Pulled from schema.coerce"
-  [schema]
-  (or (schema-string-coercions schema) (schema-coerce/keyword-enum-matcher schema)))
-
-
 (defn start-thread [daemon? thread-name f]
   "returns the thread"
   (let [t (Thread. nil f thread-name)]
@@ -191,24 +182,6 @@
   (-> url java.net.URL. .getHost))
 
 
-(defn ^:deprecated make-all-keys-optional
-  "m is a schema map. Makes all keys optional in the schema map."
-  [m]
-  (reduce (fn [ans [k v]]
-            (assoc ans (if (s/optional-key? k) k (s/optional-key k)) v))
-          {}
-          m))
-
-(defn ^:deprecated schema-keys
-  [m]
-  (map #(if (s/optional-key? %) (:k %) %) (keys m)))
-
-(defn ^:deprecated schema->update-schema
-  "Takes a map schema and makes all keys optional and dissocs the id."
-  [m]
-  (-> m (dissoc :id) make-all-keys-optional))
-
-
 (defn sleep
   [ms]
   (Thread/sleep ms))
@@ -231,15 +204,6 @@
   "Returns a string or throws an exception Not safe to use according to javadoc"
   []
   (-> (java.lang.management.ManagementFactory/getRuntimeMXBean) .getName (str/split  #"@") first))
-
-
-(defn install-aviso-schema-prefer-methods!
-  "Installs Aviso Exception dispatch prefer-methods. Without this, actual exceptions are lost."
-  []
-  (doseq [x [clojure.lang.IRecord clojure.lang.IPersistentMap java.util.Map]]
-    (prefer-method io.aviso.exception/exception-dispatch schema.core.Schema x))
-  (doseq [x [clojure.lang.IRecord clojure.lang.IPersistentMap java.util.Map]]
-    (prefer-method io.aviso.exception/exception-dispatch schema.core.AnythingSchema x)))
 
 
 (defn bytes->base64-str

@@ -16,10 +16,10 @@
           {:name :file
            :slice [98]}]
    :skip-lines 10
-   :skip-line? (some-fn string/blank? (partial re-seq #\"^-+$\"))})
+   :skip-line? (some-fn str/blank? (partial re-seq #\"^-+$\"))})
 
   "
-  (:require [clojure.string :as string]
+  (:require [clojure.string :as str]
             [clj-time.coerce :as t-coerce]
             [taoensso.timbre :as log])
   (:import [java.io BufferedReader]))
@@ -73,7 +73,7 @@
   "Takes a line of text and applies transforms and produces a value."
   [line {:keys [name slice parse type]}]
   (assert (not (and parse type)) (format "Can't specify both type and parse for col spec %s" name))
-  (let [s (string/trim (slice-line line slice))]
+  (let [s (str/trim (slice-line line slice))]
     (cond
       parse (parse s)
       type (parse-data [type s])
