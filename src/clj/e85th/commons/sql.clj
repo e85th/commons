@@ -85,7 +85,7 @@
 
 ;;----------------------------------------------------------------------
 (s/fdef insert!
-        :args (s/cat :db any? :table keyword :row map? :user-id (s/? nat-int?)))
+        :args (s/cat :db any? :table keyword :row map? :user-id (s/? some?)))
 
 (defn insert!
   "Returns the inserted row as a map. When user-id is specified,
@@ -99,7 +99,7 @@
 
 ;;----------------------------------------------------------------------
 (s/fdef insert-with-create-audits!
-        :args (s/cat :db any? :table keyword :row map? :user-id nat-int?))
+        :args (s/cat :db any? :table keyword :row map? :user-id some?))
 
 (defn insert-with-create-audits!
   "Adds in keys :created-by to the row and calls insert!"
@@ -132,7 +132,7 @@
 
 ;;----------------------------------------------------------------------
 (s/fdef insert-multi-with-audits!
-        :args (s/cat :db any? :table keyword :rows (s/coll-of map?) :user-id nat-int? :batch-size (s/? nat-int?)))
+        :args (s/cat :db any? :table keyword :rows (s/coll-of map?) :user-id some? :batch-size (s/? nat-int?)))
 
 (defn insert-multi-with-audits!
   "Batch insert with audits."
@@ -143,7 +143,7 @@
 
 ;;----------------------------------------------------------------------
 (s/fdef insert-multi-with-create-audits!
-        :args (s/cat :db any? :table keyword :rows (s/coll-of map?) :user-id nat-int? :batch-size (s/? nat-int?)))
+        :args (s/cat :db any? :table keyword :rows (s/coll-of map?) :user-id some? :batch-size (s/? nat-int?)))
 
 (defn insert-multi-with-create-audits!
   "Batch insert with create audits."
@@ -177,7 +177,7 @@
 
 ;;----------------------------------------------------------------------
 (s/fdef update
-        :args (s/cat :db any? :table keyword :row map? :where-clause vector? :user-id (s/? nat-int?) :optimistic? (s/? boolean?))
+        :args (s/cat :db any? :table keyword :row map? :where-clause vector? :user-id (s/? some?) :optimistic? (s/? boolean?))
         :ret int?)
 
 (defn update!
