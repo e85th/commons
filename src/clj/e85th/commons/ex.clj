@@ -1,11 +1,10 @@
 (ns e85th.commons.ex
   (:require [e85th.commons.util :as u]
             [clojure.string :as str])
-  (:import [e85th.commons.exceptions ValidationExceptionInfo AuthExceptionInfo ForbiddenExceptionInfo]))
+  (:import [e85th.commons.exceptions ValidationExceptionInfo AuthExceptionInfo ForbiddenExceptionInfo NotFoundExceptionInfo]))
 
 (def ex-type ::ex-type)
 (def ex-msg ::ex-msg)
-(def not-found ::not-found)
 
 
 ;; kind - keyword, msg str
@@ -71,8 +70,13 @@
   ([]
    (not-found "Resource not found."))
   ([msg]
-   (generic not-found msg)))
+   (not-found :error/not-found msg {}))
+  ([kind msg data-map]
+   (NotFoundExceptionInfo. msg (merge data-map {ex-type kind ex-msg msg}))))
 
+(defn not-found?
+  [x]
+  (instance? NotFoundExceptionInfo x))
 
 (defn wrap-not-found
   "Returns a function that throws NotFoundException if f
