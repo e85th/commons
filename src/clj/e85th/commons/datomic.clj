@@ -2,6 +2,7 @@
   (:require [com.stuartsierra.component :as component]
             [datomic.api :as d]
             [e85th.commons.ex :as ex]
+            [e85th.commons.ext :as ext]
             [taoensso.timbre :as log]))
 
 (defrecord Datomic [uri cn]
@@ -80,3 +81,55 @@
   (let [db (get-db* db)
         parent-id (get-in (d/pull db [ident] eid) [ident :db/id])]
     (d/pull db '[*] parent-id)))
+
+
+(defn filter-kv
+  "Get entities that satisfy filter conditions
+   specified in m. m is a map of keyword -> values
+   and become conditions in the `:where` clause.
+   Answers with a seq of datomic entities that match.
+   If a value is nil then adds that as a `missing?` call."
+  [db m]
+  (let [f (fn [[k v]]
+            (if (some? v)
+              ['?e k v]
+              [(list 'missing? '$ '?e k)]))
+        qm {:query {:find ['?e]
+                    :in ['$]
+                    :where (mapv f m)}
+            :args [db]}]
+    (->> (d/query qm)
+         (map d/entity))))
+
+(defn get-by-composite-key
+  "Returns the only entity that matches filter conditions in `m`.
+   Throws when more than one match is found."
+  [db m]
+  (let [ans (filter-kv db m)
+        n (count ans)]
+    (when (> n 1)
+      (throw (ex/generic :error/composite-key
+                         "Expected only 1 item for composite-key" {:m m
+                                                                   :count n})))
+    (first ans)))
+
+
+(defn prepare-update
+  "m is a map of updated values, if m has nil values lookup
+  the current value and generate a retraction."
+  ([entity m]
+   (let [fact-gen (fn [ans [k v]]
+                    (cond-> ans
+                      (nil? v) (-> (update :rms conj [:db/retract (:db/id entity) k (k entity)])
+                                   (update :x dissoc k))))
+         {:keys [x rms]} (reduce fact-gen {:x m :rms []} m)]
+     (cond-> rms
+       (seq x) (conj x))))
+  ([db eid-or-lookup m]
+   (prepare-update (d/entity db eid-or-lookup) m)))
+
+
+(defn prepare-create
+  "Removes all keys where there is an associated nil value."
+  [m]
+  (ext/filter-vals some? m))

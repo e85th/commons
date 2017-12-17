@@ -1,6 +1,5 @@
 (ns e85th.commons.util-test
-  (:require [expectations.clojure.test :refer [defexpect]]
-            [expectations :refer :all]
+  (:require [expectations.clojure.test :refer [defexpect expect]]
             [e85th.commons.util :as u]))
 
 (defexpect normalize-env-test

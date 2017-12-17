@@ -1,8 +1,7 @@
 (ns e85th.commons.net.rpc-test
   (:require [e85th.commons.net.rpc :as rpc]
             [clojure.string :as str]
-            [expectations :refer :all]
-            [expectations.clojure.test :refer [defexpect]]))
+            [expectations.clojure.test :refer [defexpect expect]]))
 
 ;; Commented Out: Unsuccessful responses on 6 Nov 2017
 

@@ -1,8 +1,7 @@
 (ns e85th.commons.token-test
   "Tests the token namespace."
   (:require [e85th.commons.token :as token]
-            [expectations.clojure.test :refer [defexpect]]
-            [expectations :refer :all]
+            [expectations.clojure.test :refer [defexpect expect]]
             [com.stuartsierra.component :as component])
   (:import [e85th.commons.exceptions AuthExceptionInfo]))
 

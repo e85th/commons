@@ -1,8 +1,7 @@
 (ns e85th.commons.net.url-test
   (:require [e85th.commons.net.url :as url]
             [clojure.string :as str]
-            [expectations :refer :all]
-            [expectations.clojure.test :refer [defexpect]]))
+            [expectations.clojure.test :refer [defexpect expect]]))
 
 
 

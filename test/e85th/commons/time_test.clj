@@ -1,8 +1,8 @@
 (ns e85th.commons.time-test
   (:require [e85th.commons.time :as time]
             [clj-time.core :as t]
-            [expectations.clojure.test :refer [defexpect]]
-            [expectations :refer :all]))
+            [expectations.clojure.test :refer [defexpect expect]]))
+
 
 (defexpect interval->duration-components-test
   ;; returned seq is (days hrs mins secs millis)

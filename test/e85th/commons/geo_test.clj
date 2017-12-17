@@ -1,7 +1,6 @@
 (ns e85th.commons.geo-test
   (:require [e85th.commons.geo :as geo]
-            [expectations :refer :all]
-            [expectations.clojure.test :refer [defexpect]]))
+            [expectations.clojure.test :refer [defexpect expect]]))
 
 (defexpect compose-address-test
   (expect "180 East 85th Street, New York, NY, 10028"

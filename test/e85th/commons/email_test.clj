@@ -1,8 +1,7 @@
 (ns e85th.commons.email-test
   "Tests the email namespace."
   (:require [e85th.commons.email :as email]
-            [expectations :refer :all]
-            [expectations.clojure.test :refer [defexpect]]))
+            [expectations.clojure.test :refer [defexpect expect]]))
 
 (defexpect domain
   (expect "example.com" (email/domain "foo@example.com"))

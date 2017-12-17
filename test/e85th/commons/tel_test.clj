@@ -1,8 +1,7 @@
 (ns e85th.commons.tel-test
   "Tests the tel namespace."
   (:require [e85th.commons.tel :as tel]
-            [expectations :refer :all]
-            [expectations.clojure.test :refer [defexpect]])
+            [expectations.clojure.test :refer [defexpect expect]])
   (:import [e85th.commons.exceptions PhoneNumberException]))
 
 (def valid-number-1 "212-212-2121")
