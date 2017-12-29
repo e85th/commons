@@ -55,11 +55,13 @@
                  (:opts this)))
   (token->data [this token]
     (try
-     (dissoc (jwt/decrypt token secret) :exp)
+      (some-> token
+              (jwt/decrypt secret)
+              (dissoc :exp))
      (catch Exception ex
        (if (some-> ex ex-data :type (= :validation))
          (log/infof "Token decrypt failed: %s" ex)
-         (log/warnf ex)))))
+         (log/warn ex)))))
 
   (token->data! [this token]
     (or (token->data this token)
