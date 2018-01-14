@@ -15,13 +15,11 @@
   component/Lifecycle
 
   (start [this]
-    (log/infof "Starting Hikari jdbc connection pool component.")
     (if (:datasource this)
       this
       (assoc this :datasource (hikari/make-datasource ds-opts))))
 
   (stop [this]
-    (log/infof "Stopping Hikari jdbc connection pool component.")
     (some-> this :datasource hikari/close-datasource)
     (assoc this :datasource nil)))
 

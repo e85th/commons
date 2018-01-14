@@ -1,7 +1,6 @@
 (ns e85th.commons.email
   (:refer-clojure :exclude [send])
   (:require [com.stuartsierra.component :as component]
-            [taoensso.timbre :as log]
             [e85th.commons.util :as u]
             [clojure.spec.alpha :as s]
             [postal.core :as postal]
@@ -67,10 +66,7 @@
 
 (defrecord SmtpEmailSender [smtp-config subject-modifier-fn]
   component/Lifecycle
-  (start [this]
-    (log/infof "SmtpEmailSender host: %s" (:host smtp-config))
-    this)
-
+  (start [this] this)
   (stop [this] this)
 
   IEmailSender

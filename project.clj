@@ -1,9 +1,9 @@
-(defproject e85th/commons "0.1.29-alpha4"
+(defproject e85th/commons "0.1.29-alpha6"
   :description "Various infrastructure and utilities to bootstrap an application/server."
   :url "http://github.com/e85th/commons"
   :license {:name "Apache License 2.0"
             :url "http://www.apache.org/licenses/LICENSE-2.0"}
-  :dependencies [[org.clojure/clojure "1.9.0-beta3" :scope "provided"]
+  :dependencies [[org.clojure/clojure "1.9.0" :scope "provided"]
                  [superstring "2.1.0"]
                  [org.clojure/java.jdbc "0.7.3"]
                  [hikari-cp "1.8.1"] ; db connection pool

@@ -2,14 +2,12 @@
   (:require [com.stuartsierra.component :as component]
             [datomic.api :as d]
             [e85th.commons.ex :as ex]
-            [e85th.commons.ext :as ext]
-            [taoensso.timbre :as log]))
+            [e85th.commons.ext :as ext]))
 
 (defrecord Datomic [uri cn]
   component/Lifecycle
 
   (start [this]
-    (log/infof "Starting Datomic component.")
     (if cn
       this
       (assoc this :cn (do
@@ -17,7 +15,6 @@
                         (d/connect uri)))))
 
   (stop [this]
-    (log/infof "Stopping Datomic component.")
     (some-> cn d/release)
     (assoc this :cn nil)))
 

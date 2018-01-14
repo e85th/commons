@@ -6,7 +6,6 @@
             [buddy.sign.jwt :as jwt]
             [buddy.core.hash :as hash]
             [buddy.auth.backends.token :as token-backend]
-            [taoensso.timbre :as log]
             [e85th.commons.ex :as ex])
   (:import [clojure.lang IFn]))
 
@@ -21,10 +20,6 @@
   ([n src]
    (assert (pos? n))
    (apply str (repeatedly n #(rand-nth src)))))
-
-(defn log-auth-error
-  [request ex]
-  (log/infof "auth error ex: %s" ex))
 
 (defprotocol ITokenFactory
   (data->token [this data])
@@ -59,9 +54,8 @@
               (jwt/decrypt secret)
               (dissoc :exp))
      (catch Exception ex
-       (if (some-> ex ex-data :type (= :validation))
-         (log/infof "Token decrypt failed: %s" ex)
-         (log/warn ex)))))
+       (when-not (some-> ex ex-data :type (= :validation))
+         (throw ex)))))
 
   (token->data! [this token]
     (or (token->data this token)
@@ -79,7 +73,7 @@
   ([secret token-ttl-minutes]
    (new-sha256-token-factory secret token-ttl-minutes "Bearer"))
   ([secret token-ttl-minutes token-name]
-   (new-sha256-token-factory secret token-ttl-minutes token-name log-auth-error))
+   (new-sha256-token-factory secret token-ttl-minutes token-name (constantly nil)))
   ([secret token-ttl-minutes token-name on-error-fn]
    (map->Sha256TokenFactory {:secret secret :token-ttl-minutes token-ttl-minutes
                              :token-name token-name :on-error-fn on-error-fn})))

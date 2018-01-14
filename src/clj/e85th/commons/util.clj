@@ -101,7 +101,6 @@
   "Run the app in UTC timezone. Do this early in app startup
    to properly deal with timezones and jdbc."
   []
-  (log/info "Setting UTC as runtime timezone.")
   (TimeZone/setDefault (TimeZone/getTimeZone "UTC"))
   (DateTimeZone/setDefault DateTimeZone/UTC))
 
