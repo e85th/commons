@@ -75,7 +75,7 @@
 
 ;;----------------------------------------------------------------------
 (s/fdef new-smtp-email-sender
-        :args (s/cat :smtp-config ::smtp-config :subject-modifier-fn fn?))
+        :args (s/cat :smtp-config ::smtp-config :subject-modifier-fn (s/? fn?)))
 
 (defn new-smtp-email-sender
   "Creates a new smtp email sender."

@@ -12,6 +12,10 @@
   [x]
   (instance? DateTime x))
 
+(defn formatter?
+  [x]
+  (instance? org.joda.time.format.DateTimeFormatter x))
+
 (s/fdef add
         :args (s/cat :unit-fn fn? :n int? :date date-time?)
         :ret date-time?)

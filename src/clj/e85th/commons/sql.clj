@@ -194,13 +194,17 @@
   (= "23505" (.getSQLState ex)))
 
 
-;;----------------------------------------------------------------------
-(s/fdef truncate-table!
-        :args (s/cat :db any? :table keyword))
+(defn execute-update
+  "Returns number of rows affected"
+  [cn sql]
+  (with-open [stmt (.createStatement cn)]
+    (.executeUpdate stmt sql)))
 
-(defn truncate-table!
-  [db table]
-  (jdbc/execute! db [(str "truncate table " (as-sql-identifier  (name table)))]))
+(defn execute-with-cn
+  [cn sql]
+  (with-open [stmt (.createStatement cn)]
+    (.execute stmt sql)))
+
 
 
 (defn execute-wo-txn!
@@ -208,5 +212,12 @@
    Useful in executing vacuum for example."
   [db sql]
   (with-open [cn (jdbc/get-connection db)]
-    (with-open [stmt (.createStatement cn)]
-      (.execute stmt sql))))
+    (execute-with-cn cn sql)))
+
+;;----------------------------------------------------------------------
+(s/fdef truncate-table!
+        :args (s/cat :db any? :table keyword))
+
+(defn truncate-table!
+  [db table]
+  (jdbc/execute! db [(str "truncate table " (as-sql-identifier  (name table)))]))
