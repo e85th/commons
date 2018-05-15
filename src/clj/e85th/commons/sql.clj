@@ -6,7 +6,8 @@
             [clj-time.coerce :as coerce]
             [hikari-cp.core :as hikari]
             [com.stuartsierra.component :as component]
-            [clojure.spec.alpha :as s])
+            [clojure.spec.alpha :as s]
+            [e85th.commons.ext :as ext])
   (:import [org.joda.time DateTime]
            [java.sql PreparedStatement SQLException]
            [e85th.commons.exceptions NoRowsUpdatedException]))
@@ -53,18 +54,38 @@
   (set-parameter [v ^PreparedStatement stmt idx]
     (.setTimestamp stmt idx (coerce/to-sql-time v))))
 
+
+
+(def idealize-row
+  "Removes all entries from input map where the value is nil."
+  (partial ext/remove-vals nil?))
+
+(def idealize-rs
+  "Returns a result set standardized by idealize-row"
+  (partial map idealize-row))
+
 (defn query
   "Returns a seq of maps representing the result set.
-  (sql/query (:db system) [\"select * from typeform.evideen_signup where id = ?\" 12]"
+  (sql/query* (:db system) [\"select * from schema.table where id = ?\" 12])"
   [db sql-and-params]
   (jdbc/query db sql-and-params {:identifiers as-clj-identifier}))
+
+(defn query1
+  "Same as `query`, but removes keys with nil value. Similar to Datomic,
+   helps with spec, so you don't have (optional) keys where the values are nilable."
+  [db sql-and-params]
+  (->> (query db sql-and-params)
+       idealize-rs))
 
 
 (defn clojurize-returned-row
   [data]
+  (when-not (map? data)
+    (throw (ex-info "Expected a map" {:data data
+                                      :type-of-data (type data)})))
   (reduce-kv (fn [ans k v]
                (assoc ans (-> k name as-clj-identifier keyword) v))
-             {}
+             (empty data)
              data))
 
 (defn- assoc-insert-audits
