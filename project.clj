@@ -42,7 +42,7 @@
                  [commons-net "3.6"]]
 
   :source-paths ["src/clj" "src/cljc"]
-  :java-source-paths ["src/java"]
+  ;; :java-source-paths ["src/java"]
 
   ;; only to quell lein-cljsbuild when using checkouts
   :cljsbuild {:builds []}

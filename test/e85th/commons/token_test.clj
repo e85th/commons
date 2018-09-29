@@ -3,7 +3,7 @@
   (:require [e85th.commons.token :as token]
             [expectations.clojure.test :refer [defexpect expect]]
             [com.stuartsierra.component :as component])
-  (:import [e85th.commons.exceptions AuthExceptionInfo]))
+  (:import [clojure.lang ExceptionInfo]))
 
 (defexpect rand-token-test
   (expect 5 (count (token/rand-token)))
@@ -30,4 +30,4 @@
         roundtrip-ex-fn (comp (partial token/token->data! token-factory-2)
                            (partial token/data->token token-factory-1))]
     (expect nil? (roundtrip-fn data))
-    (expect AuthExceptionInfo (roundtrip-ex-fn data))))
+    (expect ExceptionInfo (roundtrip-ex-fn data))))

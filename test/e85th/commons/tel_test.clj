@@ -2,7 +2,7 @@
   "Tests the tel namespace."
   (:require [e85th.commons.tel :as tel]
             [expectations.clojure.test :refer [defexpect expect]])
-  (:import [e85th.commons.exceptions PhoneNumberException]))
+  (:import [clojure.lang ExceptionInfo]))
 
 (def valid-number-1 "212-212-2121")
 (def valid-number-2 "917-917-9179")
@@ -14,7 +14,7 @@
   (expect true (tel/phone-number-instance? (tel/parse valid-number-1))))
 
 (defexpect parse-numbers
-  (expect PhoneNumberException (tel/parse nil))
+  (expect ExceptionInfo (tel/parse nil))
 
   ;; strings
   (expect nil? (tel/parse ""))
@@ -32,19 +32,19 @@
   (expect true (tel/valid? "212-212-2121")))
 
 (defexpect normalize-numbers
-  (expect PhoneNumberException (tel/normalize nil))
+  (expect ExceptionInfo (tel/normalize nil))
 
-  (expect PhoneNumberException (tel/normalize ""))
-  (expect PhoneNumberException (tel/normalize " "))
-  (expect PhoneNumberException (tel/normalize "1"))
+  (expect ExceptionInfo (tel/normalize ""))
+  (expect ExceptionInfo (tel/normalize " "))
+  (expect ExceptionInfo (tel/normalize "1"))
   (expect "+12122122121" (tel/normalize "212-212-2121")))
 
 (defexpect format-numbers
-  (expect PhoneNumberException (tel/format nil))
+  (expect ExceptionInfo (tel/format nil))
 
-  (expect PhoneNumberException (tel/format ""))
-  (expect PhoneNumberException (tel/format " "))
-  (expect PhoneNumberException (tel/format "1"))
+  (expect ExceptionInfo (tel/format ""))
+  (expect ExceptionInfo (tel/format " "))
+  (expect ExceptionInfo (tel/format "1"))
   (expect "(212) 212-2121" (tel/format "212-212-2121")))
 
 (defexpect match-numbers

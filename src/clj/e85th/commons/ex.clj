@@ -1,82 +1,66 @@
 (ns e85th.commons.ex
   (:require [e85th.commons.util :as u]
+            [clojure.pprint]
             [clojure.string :as str])
-  (:import [e85th.commons.exceptions ValidationExceptionInfo AuthExceptionInfo ForbiddenExceptionInfo NotFoundExceptionInfo]))
-
-(def ex-type ::ex-type)
-(def ex-msg ::ex-msg)
+  (:import [clojure.lang ExceptionInfo]))
 
 
-;; kind - keyword, msg str
-(defn generic
-  "Creates and returns a new generic exception."
-  ([kind]
-   (generic kind (str kind)))
-  ([kind msg]
-   (generic kind msg {}))
-  ([kind msg data-map]
-   (ex-info msg (merge data-map {ex-type kind ex-msg msg}))))
+(def ex-type :exception/type)
+(def ex-msg :exception/message)
 
-(defn validation
-  "kind becomes the error code in keyword form."
-  ([kind]
-   (validation kind (str kind)))
-  ([kind msg]
-   (validation kind msg {}))
-  ([kind msg data-map]
-   (validation kind msg data-map nil))
-  ([kind msg data-map cause]
-   (ValidationExceptionInfo. msg (merge data-map {ex-type kind ex-msg msg}) cause)))
+(def exception-category :exception/category)
 
-(defn validation?
-  [x]
-  (instance? ValidationExceptionInfo x))
+(def auth-exception :exception.category/auth)
+(def forbidden-exception :exception.category/forbidden)
+(def generic-exception :exception.category/generic)
+(def not-found-exception :exception.category/not-found)
+(def validation-exception :exception.category/validation)
 
-(defn auth
-  "No single arity which just takes msg-or-msgs because there should be specificity
-   which can be used for UIs to display more user friendly message potentially. kind becomes the
-   error code in keyword form."
-  ([kind]
-   (auth kind (str kind)))
-  ([kind msg]
-   (auth kind msg {}))
-  ([kind msg data-map]
-   (auth kind msg data-map nil))
-  ([kind msg data-map cause]
-   (AuthExceptionInfo. msg (merge data-map {ex-type kind ex-msg msg}) cause)))
+(defn exception
+  [{:keys [category type msg data cause]}]
+  (let [msg (or msg (str type))
+        data (or data {})
+        ex-map (cond-> {ex-type type ex-msg msg}
+                 category (assoc exception-category category))]
+       (ex-info msg (merge ex-map data) cause)))
 
-(defn auth?
-  [x]
-  (instance? AuthExceptionInfo x))
+(defn- exception*
+  ([category type]
+   (exception {:category category :type type}))
+  ([category type msg]
+   (exception {:category category :type type :msg msg}))
+  ([category type msg data]
+   (exception {:category category :type type :msg msg :data data}))
+  ([category type msg data cause]
+   (exception {:category category :type type :msg msg :data data :cause cause})))
 
-(defn forbidden
-  "No single arity which just takes msg-or-msgs because there should be specificity
-   which can be used for UIs to display more user friendly message potentially. kind becomes the
-   error code in keyword form."
-  ([kind]
-   (forbidden kind (str kind)))
-  ([kind msg]
-   (forbidden kind msg {}))
-  ([kind msg data-map]
-   (forbidden kind msg data-map nil))
-  ([kind msg data-map cause]
-   (ForbiddenExceptionInfo. msg (merge data-map {ex-type kind ex-msg msg}) cause)))
+(def generic (partial exception* generic-exception))
 
-(defn forbidden?
-  [x]
-  (instance? ForbiddenExceptionInfo x))
+(def validation (partial exception* validation-exception))
+
+(def auth (partial exception* auth-exception))
+
+(def forbidden (partial exception* forbidden-exception))
 
 (defn not-found
   ([]
    (not-found "Resource not found."))
   ([msg]
    (not-found :error/not-found msg {}))
-  ([kind msg data-map]
-   (NotFoundExceptionInfo. msg (merge data-map {ex-type kind ex-msg msg}))))
+  ([type msg data]
+   (exception {:category not-found-exception :type type :msg msg :data data})))
 
-(defn not-found?
-  [x]
-  (instance? NotFoundExceptionInfo x))
+(defn of-category?
+  [category ex]
+  (-> ex ex-data exception-category (= category)))
+
+(def validation? (partial of-category? validation-exception))
+
+(def auth? (partial of-category? auth-exception))
+
+(def forbidden? (partial of-category? forbidden-exception))
+
+(def not-found? (partial of-category? not-found-exception))
 
 (defn wrap-not-found
   "Returns a function that throws NotFoundException if f
@@ -92,13 +76,13 @@
   "Answers with a tuple of [keyword string map]"
   [ex]
   (let [data (ex-data ex)
-        kind (ex-type data)]
-    [kind (ex-msg data)]))
+        type (ex-type data)]
+    [type (ex-msg data)]))
 
 (defn error-tuple
   "Returns a triple of [keyword string map] or constructs an error-tuple."
   ([ex]
    (let [data (ex-data ex)]
      [(ex-type data) (ex-msg data) (dissoc data ex-type ex-msg)]))
-  ([kind msg data]
-   [kind (or msg "") (or data {})]))
+  ([type msg data]
+   [type (or msg "") (or data {})]))

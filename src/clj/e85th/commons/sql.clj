@@ -7,10 +7,10 @@
             [hikari-cp.core :as hikari]
             [com.stuartsierra.component :as component]
             [clojure.spec.alpha :as s]
+            [e85th.commons.ex :as ex]
             [e85th.commons.ext :as ext])
   (:import [org.joda.time DateTime]
-           [java.sql PreparedStatement SQLException]
-           [e85th.commons.exceptions NoRowsUpdatedException]))
+           [java.sql PreparedStatement SQLException]))
 
 (defrecord HikariCP [ds-opts]
   component/Lifecycle
@@ -191,8 +191,8 @@
   ([db table row where-clause optimistic?]
    (let [n (first (jdbc/update! db table row where-clause {:entities as-sql-identifier}))]
      (when (and optimistic? (zero? n))
-       (throw (NoRowsUpdatedException.)))
-     n)))
+       (throw (ex/exception {:category :exception.category/sql
+                             :type :no-rows-updated}))) n)))
 
 ;;----------------------------------------------------------------------
 (s/fdef update

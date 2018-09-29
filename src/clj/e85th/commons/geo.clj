@@ -1,8 +1,7 @@
 (ns e85th.commons.geo
   (:require [clojure.spec.alpha :as s]
             [com.stuartsierra.component :as component]
-            [clojure.string :as str])
-  (:import [e85th.commons.exceptions GeocodingException]))
+            [clojure.string :as str]))
 
 (defprotocol IPoint
   (x [this])
@@ -24,8 +23,8 @@
 
 (defprotocol IGeocoder
   "Geocoding"
-  (geocode [this address] "Geocode an address otherwise throws GeocodingException.")
-  (place-search [this search-params] "Geocode an address otherwise throws GeocodingException."))
+  (geocode [this address] "Geocode an address otherwise throws Exception.")
+  (place-search [this search-params] "Geocode an address otherwise throws Exception."))
 
 (defrecord NilGeocoder [geocode place]
   component/Lifecycle

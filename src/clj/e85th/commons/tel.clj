@@ -1,10 +1,19 @@
 (ns e85th.commons.tel
   "Telephone related functions"
   (:refer-clojure :exclude [format])
-  (:require [clojure.spec.alpha :as s])
-  (:import [com.google.i18n.phonenumbers PhoneNumberUtil PhoneNumberUtil$PhoneNumberFormat PhoneNumberUtil$MatchType Phonenumber$PhoneNumber]
-           [e85th.commons.exceptions PhoneNumberException]))
+  (:require [clojure.spec.alpha :as s]
+            [e85th.commons.ex :as ex])
+  (:import [com.google.i18n.phonenumbers PhoneNumberUtil
+            PhoneNumberUtil$PhoneNumberFormat PhoneNumberUtil$MatchType
+            Phonenumber$PhoneNumber]))
 
+(def phone-nbr-exception :exception.domain/phone-number)
+
+(defn phone-nbr-ex
+  [type msg]
+  (ex/exception {:domain phone-nbr-exception
+                 :type type
+                 :msg msg}))
 
 (def ^{:doc "US ISO country code"}
   default-country-code "US")
@@ -119,16 +128,16 @@
   (parse
     ([this] (parse this default-country-code))
     ([this iso-country-code]
-     (throw (PhoneNumberException. "Can't parse nil to a phone number."))))
+     (throw (phone-nbr-ex :phone.number/nil "Can't parse nil to a phone number."))))
   (match?
     ([this other] false)
     ([this other iso-country-code] false))
   (format
     ([this] (format this nil))
     ([this phone-nbr-fmt]
-     (throw (PhoneNumberException. "Can't format a nil phone number."))))
+     (throw (phone-nbr-ex :phone.number/nil "Can't format a nil phone number."))))
   (normalize [this]
-    (throw (PhoneNumberException. "Can't normalize a nil phone number."))))
+    (throw (phone-nbr-ex :phone.number/nil "Can't normalize a nil phone number."))))
 
 
 (def invalid? (complement valid?))
