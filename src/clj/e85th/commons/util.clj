@@ -62,9 +62,9 @@
 (defn build-properties
   "Returns the build properties created by lein."
   [group-id artifact-id]
-  (-> (format "META-INF/maven/%s/%s/pom.properties" group-id artifact-id)
-      io/resource
-      slurp))
+  (some-> (format "META-INF/maven/%s/%s/pom.properties" group-id artifact-id)
+          io/resource
+          slurp))
 
 (defn build-properties-with-header
   [group-id artifact-id]
@@ -76,14 +76,13 @@
        (str/join \newline)))
 
 (defn build-version
-  "Answers with the current version from pom.properties"
+  "Answers with the current version from pom.properties or nil"
   [group-id artifact-id]
-  (let [line (-> (build-properties group-id artifact-id)
-                 (str/split #"\n")
-                 (nth 2))]
-    (assert (str/starts-with? line "version=")
-            (format "Expected version line to start with version= but is %s" line))
-    (second (str/split line #"="))))
+  (some-> (build-properties group-id artifact-id)
+          (str/split #"\n")
+          (nth 2)
+          (str/split #"=")
+          second))
 
 (defn log-file-with-suffix
   "log-file is a string that ends in .log.  Adds the suffix before the
