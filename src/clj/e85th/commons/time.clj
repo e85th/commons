@@ -88,3 +88,10 @@
 
 (def ^{:doc "Answers with a seq of the constitutents of the date time. [year month day  hour minute second ms]"}
   deconstruct (juxt t/year t/month t/day t/hour t/minute t/second t/milli))
+
+
+(defn iso-8601
+  ([]
+   (iso-8601 (t/now)))
+  ([dt]
+   (fmt/unparse (:date fmt/formatters) dt)))

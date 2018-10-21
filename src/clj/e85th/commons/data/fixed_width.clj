@@ -20,8 +20,7 @@
 
   "
   (:require [clojure.string :as str]
-            [clj-time.coerce :as t-coerce]
-            [taoensso.timbre :as log])
+            [clj-time.coerce :as t-coerce])
   (:import [java.io BufferedReader]))
 
 (defmulti parse-data first)

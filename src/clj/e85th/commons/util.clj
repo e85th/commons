@@ -77,12 +77,14 @@
 
 (defn build-version
   "Answers with the current version from pom.properties or nil"
-  [group-id artifact-id]
-  (some-> (build-properties group-id artifact-id)
-          (str/split #"\n")
-          (nth 2)
-          (str/split #"=")
-          second))
+  ([group-id artifact-id]
+   (some-> (build-properties group-id artifact-id)
+           (str/split #"\n")
+           (nth 2)
+           (str/split #"=")
+           second))
+  ([group-id artifact-id not-found]
+   (or (build-version group-id artifact-id) not-found)))
 
 (defn log-file-with-suffix
   "log-file is a string that ends in .log.  Adds the suffix before the
