@@ -1,18 +1,18 @@
 {:paths ["src/clj" "src/cljc"]
  :deps
- {org.clojure/clojure                          {:mvn/version "1.9.0" :scope "provided"}
-  superstring                                  {:mvn/version "2.1.0"}
-  org.clojure/java.jdbc                        {:mvn/version "0.7.3"}
-  hikari-cp                                    {:mvn/version "2.2.0"}        ; db connection pool
-  com.layerware/hugsql                         {:mvn/version "0.4.8"}
-  com.stuartsierra/component                   {:mvn/version "0.3.2"}
+ {org.clojure/clojure                          {:mvn/version "1.10.0" :scope "provided"}
+  superstring                                  {:mvn/version "3.0.0"}
+  org.clojure/java.jdbc                        {:mvn/version "0.7.8"}
+  hikari-cp                                    {:mvn/version "2.6.0"}        ; db connection pool
+  com.layerware/hugsql                         {:mvn/version "0.4.9"}
+  com.stuartsierra/component                   {:mvn/version "0.4.0"}
   com.taoensso/timbre                          {:mvn/version "4.10.0"}       ; logging
-  cheshire                                     {:mvn/version "5.8.0"}        ; json
-  com.cognitect/transit-clj                    {:mvn/version "0.8.300"}
-  clj-time                                     {:mvn/version "0.14.0"}       ; datetime
+  cheshire                                     {:mvn/version "5.8.1"}        ; json
+  com.cognitect/transit-clj                    {:mvn/version "0.8.313"}
+  clj-time                                     {:mvn/version "0.15.1"}       ; datetime
   org.clojure/data.csv                         {:mvn/version "0.1.4"}
-  com.googlecode.libphonenumber/libphonenumber {:mvn/version "8.8.4"}
-  com.draines/postal                           {:mvn/version "2.0.2"}        ; email
+  com.googlecode.libphonenumber/libphonenumber {:mvn/version "8.10.4"}
+  com.draines/postal                           {:mvn/version "2.0.3"}        ; email
   ;; -- encryption/tokens
   buddy                                        {:mvn/version "2.0.0"}}
 
@@ -22,9 +22,9 @@
   :test {:main-opts ["-m" "cognitect.test-runner"]
          :extra-paths ["test"]
          :extra-deps
-         {expectations {:mvn/version "2.2.0-rc3"}
+         {expectations/clojure-test {:mvn/version "1.1.1"}
           com.cognitect/test-runner {:git/url "https://github.com/cognitect-labs/test-runner.git"
                                      :sha "3cb0a9daf1cb746259dc8309b218f9211ad3b33b"}}}
-  :cider-clj {:extra-deps {org.clojure/clojure {:mvn/version "1.9.0"}
-                           cider/cider-nrepl {:mvn/version "0.18.0"}}
-              :main-opts ["-m" "nrepl.cmdline" "--middleware" "[cider.nrepl/cider-middleware]"]}}}
+  :cider
+  {:extra-deps {cider/cider-nrepl {:mvn/version "0.20.0"}}
+   :main-opts ["-m" "nrepl.cmdline" "--interactive" "--color" "--middleware" "[cider.nrepl/cider-middleware]"]}}}

@@ -5,7 +5,7 @@ uberjar:
 	clj -A:uberjar
 
 test:
-	clj -A:test:compile
+	clj -A:compile:test
 
 clean:
 	rm -rf ./target
