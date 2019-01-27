@@ -50,6 +50,13 @@
   Path
   (path [this] this))
 
+(extend-protocol io/Coercions
+  Path
+  (as-file [this]
+    (.toFile this))
+  (as-url [this]
+    (-> this .toUri .toURL)))
+
 
 (defn directory?
   "path is an instance of java.nio.file.Path"
@@ -263,7 +270,7 @@
   ([source] (gunzip source (name source)))
   ([source target]
    (io/copy (-> source (input-stream :read) GZIPInputStream.)
-            (output-stream target :write))))
+            (output-stream target :create :write))))
 
 
 (def ext->uncompresser
@@ -272,8 +279,7 @@
 
 (defn uncompress
   "uncompress file if required and return the uncompressed file path.
-   If file is not compressed return input fil and return the uncompressed file path.
-   If file is not compressed return input file"
+   If file is not compressed return input file."
   ([src]
    (uncompress src (strip-file-extension src)))
   ([src dest]

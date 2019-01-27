@@ -7,6 +7,9 @@
             [hikari-cp.core :as hikari]
             [com.stuartsierra.component :as component]
             [clojure.spec.alpha :as s]
+            [hugsql.adapter :as adapter]
+            [hugsql.adapter :as adapter]
+            [hugsql.adapter.clojure-java-jdbc :as clojure-java-jdbc]
             [e85th.commons.ex :as ex]
             [e85th.commons.ext :as ext])
   (:import [org.joda.time DateTime]
@@ -23,6 +26,39 @@
   (stop [this]
     (some-> this :datasource hikari/close-datasource)
     (assoc this :datasource nil)))
+
+(deftype CaseAdapter [case-fn jdbc-adapter]
+
+  adapter/HugsqlAdapter
+  (execute [this db sqlvec options]
+    (adapter/execute jdbc-adapter db sqlvec options))
+
+  (query [this db sqlvec options]
+    (->> (adapter/query jdbc-adapter db sqlvec options)
+         (map (partial ext/map-keys case-fn))))
+
+  (result-one [this result options]
+    (->> (adapter/result-one jdbc-adapter result options)
+         (ext/map-keys case-fn)))
+
+  (result-many [this result options]
+    (->> (adapter/result-many jdbc-adapter result options)
+         (map (partial ext/map-keys case-fn))))
+
+  (result-affected [this result options]
+    (adapter/result-affected jdbc-adapter result options))
+
+  (result-raw [this result options]
+    (adapter/result-raw jdbc-adapter result options))
+
+  (on-exception [this exception]
+    (throw exception)))
+
+(defn hugsql-lisp-case-adapter
+  ([]
+   (hugsql-lisp-case-adapter (clojure-java-jdbc/hugsql-adapter-clojure-java-jdbc)))
+  ([jdbc-adapter]
+   (->CaseAdapter ext/lisp-case-keyword jdbc-adapter)))
 
 (defn new-connection-pool
   "Makes a new connection pool with a :datasource key.
@@ -64,17 +100,17 @@
   "Returns a result set standardized by idealize-row"
   (partial map idealize-row))
 
-(defn query
+(defn query*
   "Returns a seq of maps representing the result set.
   (sql/query* (:db system) [\"select * from schema.table where id = ?\" 12])"
   [db sql-and-params]
   (jdbc/query db sql-and-params {:identifiers as-clj-identifier}))
 
-(defn query1
-  "Same as `query`, but removes keys with nil value. Similar to Datomic,
+(defn query
+  "Same as `query*`, but removes keys with nil value. Similar to Datomic,
    helps with spec, so you don't have (optional) keys where the values are nilable."
   [db sql-and-params]
-  (->> (query db sql-and-params)
+  (->> (query* db sql-and-params)
        idealize-rs))
 
 
