@@ -27,23 +27,35 @@
     (some-> this :datasource hikari/close-datasource)
     (assoc this :datasource nil)))
 
-(deftype CaseAdapter [case-fn jdbc-adapter]
 
+(defn- map-rs-row
+  "Use `key-case-fn` on each key in `m`.
+   Exclude entry if `entry-exclude-pred` returns false."
+  [key-case-fn entry-exclude-pred m]
+  (->> m
+       (reduce-kv (fn [m k v]
+                    (if (entry-exclude-pred k v)
+                      m
+                      (assoc! m (key-case-fn k) v)))
+                  (transient {}))
+       persistent!))
+
+(deftype SqlAdapter [case-fn jdbc-adapter entry-exclude-pred]
   adapter/HugsqlAdapter
   (execute [this db sqlvec options]
     (adapter/execute jdbc-adapter db sqlvec options))
 
   (query [this db sqlvec options]
     (->> (adapter/query jdbc-adapter db sqlvec options)
-         (map (partial ext/map-keys case-fn))))
+         (map (partial map-rs-row case-fn entry-exclude-pred))))
 
   (result-one [this result options]
     (->> (adapter/result-one jdbc-adapter result options)
-         (ext/map-keys case-fn)))
+         (map-rs-row case-fn entry-exclude-pred)))
 
   (result-many [this result options]
     (->> (adapter/result-many jdbc-adapter result options)
-         (map (partial ext/map-keys case-fn))))
+         (map (partial map-rs-row case-fn entry-exclude-pred))))
 
   (result-affected [this result options]
     (adapter/result-affected jdbc-adapter result options))
@@ -54,11 +66,18 @@
   (on-exception [this exception]
     (throw exception)))
 
-(defn hugsql-lisp-case-adapter
+(defn hugsql-adapter
+  "By default uses the Clojure Java JDBC Adapter, lisp cases keys and excludes
+   entries where the value is nil."
   ([]
-   (hugsql-lisp-case-adapter (clojure-java-jdbc/hugsql-adapter-clojure-java-jdbc)))
-  ([jdbc-adapter]
-   (->CaseAdapter ext/lisp-case-keyword jdbc-adapter)))
+   (hugsql-adapter {}))
+  ([opts]
+   (let [{:keys [jdbc-adapter case-fn entry-exclude-pred]}
+         (merge {:jdbc-adapter (clojure-java-jdbc/hugsql-adapter-clojure-java-jdbc)
+                 :case-fn ext/lisp-case-keyword
+                 :entry-exclude-pred (fn [k v] (nil? v))} ;exclude entry if value is nil
+                opts)]
+     (->SqlAdapter case-fn jdbc-adapter entry-exclude-pred))))
 
 (defn new-connection-pool
   "Makes a new connection pool with a :datasource key.

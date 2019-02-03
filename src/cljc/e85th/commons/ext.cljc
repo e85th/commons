@@ -341,3 +341,21 @@
                            (str/blank? v))))))
   ([m pred]
    (into {} (remove pred m))))
+
+
+
+(defn- leaf-paths*
+  [m ctx]
+  (let [rfn (fn [ans k]
+              (let [ans (update ans :path conj k)
+                    v (k m)
+                    ans (if (map? v)
+                          (leaf-paths* v ans)
+                          (update ans :all conj (:path ans)))]
+                (update ans :path pop)))]
+    (reduce rfn ctx (keys m))))
+
+(defn leaf-paths
+  "Returns a seq of all unique paths leading to a leaf in the map (tree)."
+  [m]
+  (:all (leaf-paths* m {:path [] :all []})))

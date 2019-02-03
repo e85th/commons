@@ -108,3 +108,20 @@
 
   (expect {"c" 3} (ext/remove-keys keyword? {:a 1 :b 2 "c" 3}))
   (expect {:b "two" :c [:hello]} (ext/remove-vals keyword? {:a :1 :b "two" :c [:hello]})))
+
+
+
+(defexpect leaf-paths-test
+  (expect #{[:a :b :c]
+            [:a :b :d]
+            [:a :b :e]
+            [:f :g :h]
+            [:f :g :i :j :k]
+            [:f :g :i :j :l]}
+          (set (ext/leaf-paths
+                {:a {:b {:c 1
+                         :d 1
+                         :e 1}}
+                 :f {:g {:h 1
+                         :i {:j {:k 1
+                                 :l 1}}}}}))))
