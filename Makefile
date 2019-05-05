@@ -5,7 +5,7 @@ uberjar:
 	clj -A:uberjar
 
 test:
-	clj -A:compile:test
+	./bin/kaocha
 
 clean:
 	rm -rf ./target
