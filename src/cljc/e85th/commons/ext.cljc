@@ -333,12 +333,15 @@
               a b))
 
 (defn prune-map
-  "Prunes the map according to `pred`"
+  "Prunes the map according to `pred`. By default removes values which
+   are `nil`, empty string or empty collection."
   ([m]
    (prune-map m (fn [[k v]]
                   (or (nil? v)
                       (and (string? v)
-                           (str/blank? v))))))
+                           (str/blank? v))
+                      (and (coll? v)
+                           (empty? v))))))
   ([m pred]
    (into {} (remove pred m))))
 

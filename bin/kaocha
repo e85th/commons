@@ -1,0 +1,3 @@
+#!/bin/bash
+
+clojure -A:compile:test --main kaocha.runner --config-file test/tests.edn "$@"

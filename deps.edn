@@ -19,12 +19,10 @@
  :aliases
  {:compile {:extra-deps
             {com.datomic/datomic-free {:mvn/version "0.9.5561.62" :scope "provided"}}}
-  :test {:main-opts ["-m" "cognitect.test-runner"]
-         :extra-paths ["test"]
+  :test {:extra-paths ["test"]
          :extra-deps
          {expectations/clojure-test {:mvn/version "1.1.1"}
-          com.cognitect/test-runner {:git/url "https://github.com/cognitect-labs/test-runner.git"
-                                     :sha "3cb0a9daf1cb746259dc8309b218f9211ad3b33b"}}}
+          lambdaisland/kaocha {:mvn/version "0.0-418"}}}
   :cider
   {:extra-deps {cider/cider-nrepl {:mvn/version "0.20.0"}}
    :main-opts ["-m" "nrepl.cmdline" "--interactive" "--color" "--middleware" "[cider.nrepl/cider-middleware]"]}}}
