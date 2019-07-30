@@ -2,7 +2,8 @@
   "Telephone related functions"
   (:refer-clojure :exclude [format])
   (:require [clojure.spec.alpha :as s]
-            [e85th.commons.ex :as ex])
+            [e85th.commons.ex :as ex]
+            [clojure.string :as str])
   (:import [com.google.i18n.phonenumbers PhoneNumberUtil
             PhoneNumberUtil$PhoneNumberFormat PhoneNumberUtil$MatchType
             Phonenumber$PhoneNumber]))
@@ -32,9 +33,19 @@
   [x]
   (instance? Phonenumber$PhoneNumber x))
 
-(s/fdef str->phone-number
-        :args (s/cat :nbr string? :iso-country-code (s/? string?))
-        :ret (s/nilable phone-number?))
+
+(defn coerce-e164
+  "Coerces a number to be an E164 like number, by guessing at what
+  maybe a valid number without a country code."
+  [s]
+  (when (str/blank? s)
+    (throw (phone-nbr-ex :phone.number/nil "Can't coerce a blank phone number.")))
+  (let [s      (str/trim s)
+        digits (->> s (filter #(Character/isDigit %)) (apply str))]
+    (cond
+      (str/starts-with? s "+") (str "+" digits)
+      (= 10 (count digits))    (str "+1" digits)
+      :else                    (str "+" digits))))
 
 (defn str->phone-number
   "Parse a *valid* phone number otherwise returns nil"
@@ -42,7 +53,7 @@
    (str->phone-number nbr default-country-code))
   ([nbr iso-country-code]
    (try
-     (.parse ^PhoneNumberUtil phone-nbr-util nbr iso-country-code)
+     (.parse ^PhoneNumberUtil phone-nbr-util (coerce-e164 nbr) iso-country-code)
      (catch Exception ex
        nil))))
 

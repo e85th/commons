@@ -102,7 +102,7 @@
 (defn valid?
   "Valid email address?. The regex was copied from regular-expressions.info"
   [address]
-  (some? (re-seq #"^[a-z0-9._%+-]+@[a-z0-9.-]+\.[a-z]{2,}$" (str/lower-case address))))
+  (some? (re-seq #"^[a-z0-9._%+-]+@[a-z0-9.-]+\.[a-z]{2,}$" (str/lower-case (or address "")))))
 
 (def invalid? (complement valid?))
 

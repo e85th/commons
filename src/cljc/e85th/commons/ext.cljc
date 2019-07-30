@@ -83,11 +83,18 @@
   [k]
   (.-sym k))
 
+
+(defn namespaced-keyword->string
+  "`:hello/world` -> 'hello/world'"
+  [x]
+  (-> x str (subs 1)))
+
 (defn lisp-case-keyword
   "Turns :helloHow to :hello-how
   Namespace is omitted in returned value."
   [x]
   (-> x name str/lisp-case keyword))
+
 
 (defn camel-case-keyword
   "Namespace is omitted in returned value."
@@ -159,6 +166,17 @@
   [m]
   (walk (key-xformer lisp-case-keyword) identity m))
 
+(defn lisp-case-namespaced-keys
+  "Preserves namespaces while converting keys to lisp cased keywords."
+  [m]
+  (let [f (fn [x]
+            (let [x (keyword x)
+                  x-ns (some-> x namespace str/lisp-case)
+                  x-nm (-> x name str/lisp-case)]
+              (if x-ns
+                (keyword x-ns x-nm)
+                (keyword x-nm))))]
+    (walk (key-xformer f) identity m)))
 
 (defn random-uuid
   "Generates a new uuid."
@@ -332,33 +350,61 @@
                       :else y))
               a b))
 
-(defn prune-map
-  "Prunes the map according to `pred`. By default removes values which
-   are `nil`, empty string or empty collection."
-  ([m]
-   (prune-map m (fn [[k v]]
-                  (or (nil? v)
-                      (and (string? v)
-                           (str/blank? v))
-                      (and (coll? v)
-                           (empty? v))))))
-  ([m pred]
-   (into {} (remove pred m))))
+(defn prune
+  "Walks x removing nil/empty/empty strings. `pred` takes in an object
+   and returns true if it should not be included in the output."
+  ([x]
+   (prune
+    x
+    (fn [y]
+      (cond
+        (nil? y) true
+        (string? y) (str/blank? y)
+        (coll? y) (nil? (seq y))
+        :else false))))
+  ([x pred]
+   (letfn [(-empty [c]
+             (if (map-entry? c)
+               []
+               (with-meta (empty c) (meta c))))
+           (mapf [m]
+             (into (-empty m)
+                   (for [[k v] m
+                         :when (not (pred v))]
+                     [k v])))]
+     (walk/postwalk
+      (fn [x]
+        (cond
+          (and (map-entry? x)
+               (not (pred (second x)))) x
+          (map-entry? x) nil
+          (map? x) (mapf x)
+          (seq? x) (remove pred x)
+          (coll? x) (into (-empty x) (remove pred x))
+          :else x))
+      x))))
 
 
-
-(defn- leaf-paths*
-  [m ctx]
-  (let [rfn (fn [ans k]
-              (let [ans (update ans :path conj k)
-                    v (k m)
-                    ans (if (map? v)
-                          (leaf-paths* v ans)
-                          (update ans :all conj (:path ans)))]
-                (update ans :path pop)))]
-    (reduce rfn ctx (keys m))))
-
-(defn leaf-paths
-  "Returns a seq of all unique paths leading to a leaf in the map (tree)."
+;; from weavejester on reddit
+(defn paths
+  "Returns a seq of vectors which represent paths to leaves in `m`."
   [m]
-  (:all (leaf-paths* m {:path [] :all []})))
+  (letfn [(paths* [ps ks m]
+            (reduce-kv
+             (fn [ps k v]
+               (if (and (map? v) (seq v))
+                 (paths* ps (conj ks k) v)
+                 (conj ps (conj ks k))))
+             ps
+             m))]
+    (paths* () [] m)))
+
+
+
+(defn namespace-keys
+  "Namespaces keys in map `m` with the ns prefix specified."
+  [m ns]
+  (let [ns-name (name ns)]
+    (map-keys (fn [k]
+                (keyword ns-name (name k)))
+              m)))
