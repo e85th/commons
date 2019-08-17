@@ -61,6 +61,27 @@
   ([s default]
    (try-parse parse-uuid s default)))
 
+
+(defn coerce-long
+  ([x]
+   (if (int? x)
+     x
+     (parse-long x)))
+  ([x default]
+   (if (int? x)
+     x
+     (parse-long x default))))
+
+(defn coerce-double
+  ([x]
+   (if (double? x)
+     x
+     (parse-double x)))
+  ([x default]
+   (if (double? x)
+     x
+     (parse-double x default))))
+
 ;;----------------------------------------------------------------------
 ;; Parse data types
 ;;----------------------------------------------------------------------
@@ -88,6 +109,7 @@
   "`:hello/world` -> 'hello/world'"
   [x]
   (-> x str (subs 1)))
+
 
 (defn lisp-case-keyword
   "Turns :helloHow to :hello-how
