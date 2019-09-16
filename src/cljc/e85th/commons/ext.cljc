@@ -140,12 +140,12 @@
              [(key-fn k) (val-fn v)])]
      (walk f m))))
 
-(def ^:const elided "~elided~")
+(def ^:const redacted "~redacted~")
 
-(defn elide-vals
+(defn redact-vals
   "Walks the map eliding the values whose key appears in key-set."
   ([key-set m]
-   (elide-vals elided key-set m))
+   (redact-vals redacted key-set m))
   ([elision-value key-set m]
    (walk (fn [[k v]]
            (if (contains? key-set k)
@@ -153,7 +153,7 @@
              [k v]))
          m)))
 
-(defn elide-paths
+(defn redact-paths
   [elision-value coll & paths]
   (reduce (fn [ans path]
             (cond-> ans
@@ -162,12 +162,12 @@
           coll
           paths))
 
-(defn elide-paths*
+(defn redact-paths*
   "paths is a collection of vectors that can be used to
    navigate a collection. Each path must be a non empty
    vector otherwise that path is skipped."
   ([coll & paths]
-   (apply elide-paths elided coll paths)))
+   (apply redact-paths redacted coll paths)))
 
 (defn- key-xformer
   "Returns a function which takes in some key `k`
@@ -408,7 +408,7 @@
 
 
 ;; from weavejester on reddit
-(defn paths
+(defn leaf-paths
   "Returns a seq of vectors which represent paths to leaves in `m`."
   [m]
   (letfn [(paths* [ps ks m]
@@ -429,4 +429,25 @@
   (let [ns-name (name ns)]
     (map-keys (fn [k]
                 (keyword ns-name (name k)))
+              m)))
+
+
+(defn map-invert+
+  "Like `set/map-invert`, but if the value is a collection, a key for each
+  collection value is created mapped to the original key. ie
+  {:a [1 2] :b [3 4] :c [4 5]} =>
+  {1 #{:a} 2 #{:a}
+   3 #{:b}, 4 #{:b :c}
+   5 #{:c}}"
+  ([m]
+   (map-invert+ m {:val-coll #{}}))
+  ([m {:keys [val-coll]
+       :or   {val-coll #{}}}]
+   (reduce-kv (fn [ans k v]
+                (reduce
+                 (fn [ans v]
+                   (update ans v (fnil conj val-coll) k))
+                 ans
+                 (if (coll? v) v [v])))
+              {}
               m)))

@@ -70,27 +70,27 @@
   (expect false (ext/parse-bool "false")))
 
 
-(defexpect elide-vals-test
+(defexpect redact-vals-test
   (let [m {:a "foo" :b "bar"}]
-    (expect m (ext/elide-vals #{} m)))
+    (expect m (ext/redact-vals #{} m)))
 
-  (expect {:a "foo" :b ext/elided}
-          (ext/elide-vals #{:b} {:a "foo" :b "bar"}))
+  (expect {:a "foo" :b ext/redacted}
+          (ext/redact-vals #{:b} {:a "foo" :b "bar"}))
 
-  (expect {:a "foo" :b ext/elided :c ext/elided :d 23}
-          (ext/elide-vals #{:b :c} {:a "foo" :b "bar" :c "baz" :d 23})))
+  (expect {:a "foo" :b ext/redacted :c ext/redacted :d 23}
+          (ext/redact-vals #{:b :c} {:a "foo" :b "bar" :c "baz" :d 23})))
 
-(defexpect elide-paths-test
+(defexpect redact-paths-test
   (let [m {:a {:b "foo" :c "bar"}}]
-    (expect m (ext/elide-paths ext/elided m [])))
+    (expect m (ext/redact-paths ext/redacted m [])))
 
-  (expect {:a {:b ext/elided :c "bar"}}
-          (ext/elide-paths ext/elided {:a {:b ext/elided :c "bar"}} [:a :b]))
+  (expect {:a {:b ext/redacted :c "bar"}}
+          (ext/redact-paths ext/redacted {:a {:b ext/redacted :c "bar"}} [:a :b]))
 
-  (expect {:a {:b ext/elided :c "bar"}
-           :d ext/elided}
-          (ext/elide-paths ext/elided
-                           {:a {:b ext/elided :c "bar"}
+  (expect {:a {:b ext/redacted :c "bar"}
+           :d ext/redacted}
+          (ext/redact-paths ext/redacted
+                           {:a {:b ext/redacted :c "bar"}
                             :d 23}
                            [:a :b]
                            [:d])))
@@ -125,3 +125,26 @@
                  :f {:g {:h 1
                          :i {:j {:k 1
                                  :l 1}}}}}))))
+
+
+
+(defexpect map-invert+test
+  (expect {} (ext/map-invert+ {}))
+
+  (expect
+   {1 #{:a}
+    2 #{:a}
+    3 #{:b}
+    4 #{:b :c}
+    5 #{:c}}
+   (ext/map-invert+ {:a [1 2] :b [3 4] :c [4 5]}))
+
+
+  (expect
+   {1 [:a]
+    2 [:a]
+    3 [:b]
+    4 [:b :c]
+    5 [:c]}
+   (ext/map-invert+ {:a [1 2] :b [3 4] :c [4 5]}
+                    {:val-coll []})))
