@@ -148,3 +148,30 @@
     5 [:c]}
    (ext/map-invert+ {:a [1 2] :b [3 4] :c [4 5]}
                     {:val-coll []})))
+
+
+(defexpect select-keys+
+  (expect {} (ext/select-keys+ {} #{}))
+
+  ;; same as core select-keys
+  (expect {:a 1} (ext/select-keys+ {:a 1 :b 2} #{:a}))
+
+  ;; top level and nested :a
+  (expect {:a 1 :c {:a 3}} (ext/select-keys+ {:a 1
+                                              :b 2
+                                              :c {:a 3
+                                                  :b 4}}
+                                             #{:a}))
+
+  (expect {:b 2 :c {:b 4}} (ext/select-keys+ {:a 1
+                                              :b 2
+                                              :c {:a 3
+                                                  :b 4}}
+                                             #{:b}))
+
+  (expect {:x/b 2 :c {:y/b 4}} (ext/select-keys+ {:a 1
+                                                  :x/b 2
+                                                  :c {:a 3
+                                                      :y/b 4}}
+                                                 (fn [k]
+                                                   (= "b" (name k))))))

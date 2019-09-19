@@ -421,7 +421,19 @@
              m))]
     (paths* () [] m)))
 
-
+;; From https://dnaeon.github.io/clojure-map-ks-paths/
+(defn keys-in
+  "Returns a sequence of all key paths in a given map using DFS walk."
+  [m]
+  (letfn [(children [node]
+            (let [v (get-in m node)]
+              (if (map? v)
+                (map (fn [x] (conj node x)) (keys v))
+                [])))
+          (branch? [node] (-> (children node) seq boolean))]
+    (->> (keys m)
+         (map vector)
+         (mapcat #(tree-seq branch? children %)))))
 
 (defn namespace-keys
   "Namespaces keys in map `m` with the ns prefix specified."
@@ -451,3 +463,15 @@
                  (if (coll? v) v [v])))
               {}
               m)))
+
+
+(defn select-keys+
+  "Like core/select-keys but will also include the smallest branch
+   where the key exists also. `pred?` is passed a key and should return
+   truthy if the key and the corresponding value should be included in the output map.
+  `{:a 1 :b 2 :c {:a 3 :b 4}} => {:a 1 :c {:a 3}}` when `pred?` is `#{:a}`. "
+  [m pred?]
+  (reduce (fn [ans path]
+            (assoc-in ans path (get-in m path)))
+          {}
+          (filter (comp pred? last) (keys-in m))))
